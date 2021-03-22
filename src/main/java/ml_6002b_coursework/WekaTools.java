@@ -34,6 +34,14 @@ public class WekaTools {
 
             }
         }
+/*
+        public int[][] confusionMatrix(int[] predicted, int[] actual){
+            int[][] confusionMatrix = new int[2][2];
+            for (int i =0; i < predicted.length; i++) {
+                confusionMatrix[actual[i]][predicted[i]]++;
+            }
+            return confusionMatrix;
+        }*/
 
 
         // Print ConfusionMatrix
