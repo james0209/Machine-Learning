@@ -10,7 +10,7 @@ import java.util.Arrays;
 
 public class TreeEnsemble extends AbstractClassifier{
     private int ensembleSize = 50;
-    private ArrayList<C45Coursework> ensembleContainer = new ArrayList<C45Coursework>(ensembleSize);
+    private ArrayList<ID3Coursework> ensembleContainer = new ArrayList<ID3Coursework>(ensembleSize);
 
     @Override
     public void buildClassifier(Instances data) throws Exception {
