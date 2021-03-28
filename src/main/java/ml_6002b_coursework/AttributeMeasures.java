@@ -29,6 +29,7 @@ public class AttributeMeasures {
 
     public static double measureChiSquared(int[][] array){
         try{
+            int degFreedom = (array.length - 1) * (array[0].length - 1);
             return 0.0;
         }
         catch (Exception e){
