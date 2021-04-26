@@ -7,13 +7,30 @@ import weka.core.Utils;
 
 import java.util.Enumeration;
 
+import static ml_6002b_coursework.WekaTools.loadClassificationData;
+
 public class IGAttributeSplitMeasure implements AttributeSplitMeasure{
 
-
+    /**
+     * Computes information gain for an attribute.
+     *
+     * @param data the data for which info gain is to be computed
+     * @param att the attribute
+     * @return the information gain for the given attribute and data
+     * @throws Exception if computation fails
+     */
     @Override
     public double computeAttributeQuality(Instances data, Attribute att) throws Exception {
         double infoGain = computeEntropy(data);
-        Instances[] splitData = splitData(data, att);
+        Instances[] splitData;
+
+        if (att.isNominal()) {
+            splitData = splitData(data, att);
+        }
+        else {
+            splitData = splitDataOnNumeric(data, att);
+        }
+
         for (int j = 0; j < att.numValues(); j++) {
             if (splitData[j].numInstances() > 0) {
                 infoGain -= ((double) splitData[j].numInstances() /
@@ -47,6 +64,24 @@ public class IGAttributeSplitMeasure implements AttributeSplitMeasure{
         }
         entropy /= (double) data.numInstances();
         return entropy + Utils.log2(data.numInstances());
+    }
+
+    public static void main(String[] args) throws Exception {
+        Instances currentData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Diagnosis_TRAIN.arff");
+        Enumeration enumeration = currentData.enumerateAttributes();
+        IGAttributeSplitMeasure ig = new IGAttributeSplitMeasure();
+        while(enumeration.hasMoreElements()){
+            Attribute att = (Attribute) enumeration.nextElement();
+            System.out.println("measure Info Gain for attribute " + att.name() + " splitting diagnosis = " + ig.computeAttributeQuality(currentData, att));
+        }
+
+/*        Instances currentData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Chinatown_TRAIN.arff");
+        Enumeration enumeration = currentData.enumerateAttributes();
+        IGAttributeSplitMeasure ig = new IGAttributeSplitMeasure();
+        while(enumeration.hasMoreElements()){
+            Attribute att = (Attribute) enumeration.nextElement();
+            System.out.println("measure Info Gain for attribute " + att.name() + " splitting diagnosis = " + ig.computeAttributeQuality(currentData, att));
+        }*/
     }
 
 

@@ -31,6 +31,9 @@ import weka.core.TechnicalInformation.Type;
 
 import java.util.Enumeration;
 
+import static ml_6002b_coursework.WekaTools.loadClassificationData;
+import static ml_6002b_coursework.WekaTools.splitData;
+
 /**
 
 * Adaptation of the Id3 Weka classifier for use in machine learning coursework (6002B)
@@ -71,7 +74,7 @@ import java.util.Enumeration;
  * @version $Revision: 6404 $ 
  */
 public class ID3Coursework
-  extends AbstractClassifier 
+  extends AbstractClassifier
   implements TechnicalInformationHandler, Sourcable {
 
   /** for serialization */
@@ -91,7 +94,10 @@ public class ID3Coursework
 
   /** Class attribute of dataset. */
   private Attribute m_ClassAttribute;
+
   private AttributeSplitMeasure attSplit = new IGAttributeSplitMeasure();
+  private AttributeSplitMeasure chiAttSplit = new ChiSquaredAttributeSplitMeasure();
+  private AttributeSplitMeasure giniAttSplit = new GiniAttributeSplitMeasure();
 
 
   /**
@@ -143,6 +149,10 @@ public class ID3Coursework
 
     // class
     result.enable(Capability.NOMINAL_CLASS);
+
+    result.enable(Capability.NUMERIC_CLASS);
+    result.enable(Capability.NUMERIC_ATTRIBUTES);
+
     result.enable(Capability.MISSING_CLASS_VALUES);
 
     // instances
@@ -193,6 +203,7 @@ public class ID3Coursework
       infoGains[att.index()] = attSplit.computeAttributeQuality(data, att);
     }
     m_Attribute = data.attribute(Utils.maxIndex(infoGains));
+    
     
     // Make leaf if information gain is zero. 
     // Otherwise create successors.
@@ -420,12 +431,63 @@ public class ID3Coursework
     return RevisionUtils.extract("$Revision: 6404 $");
   }
 
+  public static AttributeSplitMeasure setOptions(String splitMeasure){
+    switch(splitMeasure)
+    {
+      case "IGAttributeSplitMeasure":
+        return new IGAttributeSplitMeasure();
+      case "GiniAttributeSplitMeasure":
+        return new GiniAttributeSplitMeasure();
+      case "ChiSquaredAttributeSplitMeasure":
+        return new ChiSquaredAttributeSplitMeasure();
+      default:
+        System.out.println("no match");
+        return new IGAttributeSplitMeasure();
+    }
+  }
+
+  enum SplitMeasuresEnum {
+    IGAttributeSplitMeasure,
+    GiniAttributeSplitMeasure,
+    ChiSquaredAttributeSplitMeasure
+  }
+
   /**
    * Main method.
    *
    * @param args the options for the classifier
    */
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     runClassifier(new ID3Coursework(), args);
+
+    ID3Coursework id3 = new ID3Coursework();
+    Attribute att = null;
+    Instances[] splitData = new Instances[0];
+
+    Instances currentData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/optdigits.arff");
+    //currentData.setClassIndex(currentData.numAttributes() - 1);
+    Enumeration enumeration = currentData.enumerateAttributes();
+
+    for(SplitMeasuresEnum splitMeasure : SplitMeasuresEnum.values()){
+      AttributeSplitMeasure classifier = setOptions(splitMeasure.toString());
+      while(enumeration.hasMoreElements()){
+        att = (Attribute) enumeration.nextElement();
+        splitData = classifier.splitData(currentData, att);
+      }
+
+      for (Instances s : splitData){
+        id3.buildClassifier(s);
+        System.out.println("ID3 using measure " + splitMeasure + " on JW Problem has test accuracy = " +
+                id3.toString());
+        //System.out.println(s.toSummaryString());
+      }
+
+
+
+    }
+
+    //TODO: SETUP USING RANDOM SPLIT
+
+
   }
 }

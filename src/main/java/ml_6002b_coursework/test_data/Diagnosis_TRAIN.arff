@@ -1,0 +1,19 @@
+@Relation symptoms
+@attribute headache { yes, no }
+@attribute spots { yes, no }
+@attribute neck { yes, no }
+@attribute diagnosis { POSITIVE, NEGATIVE }
+
+@data
+yes, yes, yes, POSITIVE
+no, yes, yes, POSITIVE
+no, yes, no, POSITIVE
+yes, no, yes, POSITIVE
+no, yes, yes, POSITIVE
+yes, no, yes, POSITIVE
+no, yes, no, NEGATIVE
+no, no, yes, NEGATIVE
+no, yes, no, NEGATIVE
+yes, no, yes, NEGATIVE
+yes, no, no, NEGATIVE
+no, no, no, NEGATIVE

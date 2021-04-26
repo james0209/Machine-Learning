@@ -60,7 +60,6 @@ public class WekaTools {
         try{
             FileReader reader = new FileReader(fullPath);
             data = new Instances(reader);
-            return data;
         }
         catch(Exception e){
             System.out.println("Exception caught: "+e);
