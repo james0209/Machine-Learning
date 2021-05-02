@@ -22,6 +22,7 @@ public class IGAttributeSplitMeasure implements AttributeSplitMeasure{
     @Override
     public double computeAttributeQuality(Instances data, Attribute att) throws Exception {
         double infoGain = computeEntropy(data);
+        //double infoGain = 0;
         Instances[] splitData;
 
         if (att.isNominal()) {
@@ -31,14 +32,30 @@ public class IGAttributeSplitMeasure implements AttributeSplitMeasure{
             splitData = splitDataOnNumeric(data, att);
         }
 
-        for (int j = 0; j < att.numValues(); j++) {
-            if (splitData[j].numInstances() > 0) {
-                infoGain -= ((double) splitData[j].numInstances() /
-                        (double) data.numInstances()) *
-                        computeEntropy(splitData[j]);
+
+
+        if (att.isNominal()){
+            for (int j = 0; j < att.numValues(); j++) {
+                if (splitData[j].numInstances() > 0) {
+                    infoGain -= ((double) splitData[j].numInstances() /
+                            (double) data.numInstances()) *
+                            computeEntropy(splitData[j]);
+                }
             }
+            return infoGain;
         }
-        return infoGain;
+        else{
+            for(int i = 0; i < splitData.length; i++){
+                if (splitData[i].numInstances() > 0) {
+                    infoGain -= ((double) splitData[i].numInstances() /
+                            (double) data.numInstances()) *
+                            computeEntropy(splitData[i]);
+                }
+            }
+            return infoGain;
+        }
+
+
     }
 
     /**
@@ -75,13 +92,13 @@ public class IGAttributeSplitMeasure implements AttributeSplitMeasure{
             System.out.println("measure Info Gain for attribute " + att.name() + " splitting diagnosis = " + ig.computeAttributeQuality(currentData, att));
         }
 
-/*        Instances currentData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Chinatown_TRAIN.arff");
-        Enumeration enumeration = currentData.enumerateAttributes();
-        IGAttributeSplitMeasure ig = new IGAttributeSplitMeasure();
-        while(enumeration.hasMoreElements()){
-            Attribute att = (Attribute) enumeration.nextElement();
-            System.out.println("measure Info Gain for attribute " + att.name() + " splitting diagnosis = " + ig.computeAttributeQuality(currentData, att));
-        }*/
+        Instances continuousData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/optdigits.arff");
+        Enumeration continuousEnumeration = continuousData.enumerateAttributes();
+        IGAttributeSplitMeasure ig2 = new IGAttributeSplitMeasure();
+        while(continuousEnumeration.hasMoreElements()){
+            Attribute att = (Attribute) continuousEnumeration.nextElement();
+            System.out.println("measure Info Gain for attribute " + att.name() + " splitting diagnosis = " + ig2.computeAttributeQuality(continuousData, att));
+        }
     }
 
 

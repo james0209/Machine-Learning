@@ -1,15 +1,9 @@
 package ml_6002b_coursework;
 
 import weka.classifiers.AbstractClassifier;
-import weka.core.Attribute;
-import weka.core.Capabilities;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.core.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
+import java.util.*;
 
 import static ml_6002b_coursework.WekaTools.loadClassificationData;
 
@@ -19,7 +13,7 @@ public class TreeEnsemble extends AbstractClassifier{
     private int numAttributes;
     private double attributeProportion;
     private ID3Coursework[] ensembleContainer;
-    private boolean[][] attributesForEachClassifier;
+    private Attribute[][] attributesForEachClassifier;
 
     /**
      * Default constructor for a TreeEnsemble
@@ -38,32 +32,48 @@ public class TreeEnsemble extends AbstractClassifier{
     @Override
     public void buildClassifier(Instances data) throws Exception {
 
-        numAttributes = data.numAttributes();
-        attributesForEachClassifier = new boolean[ensembleSize][numAttributes];
+        this.attributesForEachClassifier = new Attribute[ensembleSize][data.numAttributes()];
 
-        // copy of the Instances
-        Instances instancesCopy = new Instances(data);
-
-        // construct a new set of instances for each element of the ensemble by selecting a random subset
-        // (without replacement) of the attributes.
         for (int i = 0; i < ensembleSize; i++) {
+            ID3Coursework classifier = new ID3Coursework();
 
-            // shuffle instances on every run, but don't reset as there should be no replacement
-            Collections.shuffle(instancesCopy);
+            ////// SELECT ATTRIBUTES
+            int numAttribs = data.numAttributes() - 1;
+            int numToSelect = (int)Math.round(numAttributes * attributeProportion);
 
-            int numCopyInstances = instancesCopy.numInstances();
-            int numCopyAttributes = instancesCopy.numAttributes();
+            // Array of random index's for attributes to remove
+            int[] randomIndices = new int[numToSelect];
 
-            //int subsetInstances = (int) Math.round((instancesPercent/100) * numInstances);
-            int subsetAttributes = (int)Math.round(numAttributes * attributeProportion);
+            // Generate a random array of indices as index's for the attributes
+            for (int j = 0; j < numToSelect; j++){
+                Random rnd = new Random();
+                int randomIndex = rnd.nextInt(numAttribs);
+                //TODO: CHECK IF NUMBER IS ALREADY IN ARRAY
+                randomIndices[j] = randomIndex;
+            }
 
-            Instances subset = new Instances(instancesCopy, 0, subsetAttributes);
+            // Array of selected attributes
+            Attribute[] selected = new Attribute[numToSelect];
 
-            int numAttributesToRemove = (int)Math.ceil(instancesCopy.numAttributes() * (1.0-attributeProportion));
+            for (int k = 0; k < randomIndices.length; k++){
+                int ind = randomIndices[k];
+                Attribute select = data.attribute(ind);
+                if (select.index() < data.numAttributes()-1) {
+                    selected[k] = select;
+                }
+            }
+
+            attributesForEachClassifier[i] = selected;
+            Instances modifiedData = data;
+
+            for (Attribute att : attributesForEachClassifier[i]){
+                if (att.index() < data.numAttributes() - 1) {
+                    modifiedData.deleteAttributeAt(att.index());
+                }
+            }
 
             // Build a separate classifier on each Instances object
-            ID3Coursework classifier = new ID3Coursework();
-            classifier.buildClassifier(subset);
+            classifier.buildClassifier(modifiedData);
             ensembleContainer[i] = classifier;
 
         }
@@ -72,56 +82,100 @@ public class TreeEnsemble extends AbstractClassifier{
 
 
     @Override
-    public double classifyInstance(Instance instance)
-    {
-        // Return the majority vote of the ensemble
-        //TODO: Look at whether this actually uses the Votes, or just bases it off of probabilities
-        double[] probabilities = distributionForInstance(instance);
-        double[] votes = new double[probabilities.length];
+    public double classifyInstance(Instance instance) throws NoSupportForMissingValuesException {
+        double predictedClass;
+        int[] countVotes = new int[2];
 
-        int index = 0;
-        double highestProb = 0.0;
+        for (int i = 0; i < ensembleSize; i++) {
+            ID3Coursework classifier = ensembleContainer[i];
 
-        for(int i = 0; i < instance.numClasses(); i++)
-        {
-            if(probabilities[i] > highestProb)
-            {
-                highestProb = probabilities[i];
-                index = i;
+            Instance modified = instance;
+            for (Attribute a : attributesForEachClassifier[i]){
+                if (a.index() < instance.numAttributes()-1) {
+                    modified.deleteAttributeAt(a.index());
+                }
+            }
+
+            double classPredicted = classifier.classifyInstance(modified);
+            if (classPredicted == 0) {
+                countVotes[0]++;
+            }
+            else {
+                countVotes[1]++;
             }
         }
 
-        int c=(int)instance.classValue();
-        votes[c]++;
-        for (double d : votes){
-
+        if (countVotes[0] > countVotes[1]){
+            predictedClass = 0;
+        }
+        else {
+            predictedClass = 1;
         }
 
-        return index;
+        return predictedClass;
     }
 
 
     @Override
-    public double[] distributionForInstance(Instance ins){
-        double[] probabilities = new double[ins.numClasses()];
+    public double[] distributionForInstance(Instance ins) throws NoSupportForMissingValuesException {
+        double[] distribution = new double[2];
+        int[] countVotes = new int[2];
 
-        return null;
+        for (int i = 0; i < this.ensembleSize; i++) {
+            ID3Coursework id3 = this.ensembleContainer[i];
+
+            Instance modified = ins;
+            for (Attribute a : attributesForEachClassifier[i]){
+                if (a.index() < ins.numAttributes()-1) {
+                    modified.deleteAttributeAt(a.index());
+                }
+            }
+
+            double classPredicted = id3.classifyInstance(modified);
+            if (classPredicted == -1) {
+                countVotes[0]++;
+            }
+            else {
+                countVotes[1]++;
+            }
+        }
+
+        distribution[0] = (double) countVotes[0]/ensembleSize;
+        distribution[1] = (double) countVotes[1]/ensembleSize;
+
+        return distribution;
     }
 
     public static void main(String[] args) throws Exception {
-        Instances currentData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/optdigits.arff");
+        Instances trainingData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/optdigits.arff");
         TreeEnsemble treeEnsemble = new TreeEnsemble();
 
         try
         {
-            treeEnsemble.buildClassifier(currentData);
+            treeEnsemble.buildClassifier(trainingData);
+            trainingData.setClassIndex(trainingData.numAttributes()-1);
         } catch (Exception e)
         {
             e.printStackTrace();
         }
-        System.out.println("Test Accuracy: ");
-        System.out.println(WekaTools.accuracy(treeEnsemble, currentData));
 
+        Instances testData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/optdigits.arff");
+        for (Instance data : testData){
+            System.out.println("classify instance = " + treeEnsemble.classifyInstance(data));
+        }
+/*        System.out.println();
+        for (Instance data : testData){
+            double[] distribution = treeEnsemble.distributionForInstance(data);
+            System.out.print("distribution for instance = ");
+            for (double d : distribution){
+                System.out.print(d + ", ");
+            }
+            System.out.println();
+        }
+        System.out.println("Test Accuracy: ");
+        System.out.println(WekaTools.accuracy(treeEnsemble, testData));*/
 
     }
+
+
 }

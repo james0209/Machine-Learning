@@ -19,28 +19,43 @@ public interface AttributeSplitMeasure {
 
     /**
      * Splits a dataset according to the values of a nominal attribute.
+     * Splits Instances by Attribute
      *
      * @param data the data which is to be split
      * @param att the attribute to be used for splitting
      * @return the sets of instances produced by the split
      */
      default Instances[] splitData(Instances data, Attribute att) {
-        Instances[] splitData = new Instances[att.numValues()];
-        for (int j = 0; j < att.numValues(); j++) {
-            splitData[j] = new Instances(data, data.numInstances());
-        }
-        Enumeration instEnum = data.enumerateInstances();
-        while (instEnum.hasMoreElements()) {
-            Instance inst = (Instance) instEnum.nextElement();
-            splitData[(int) inst.value(att)].add(inst);
-        }
-        for (int i = 0; i < splitData.length; i++) {
-            splitData[i].compactify();
-        }
-        return splitData;
+         if (att.isNominal()) {
+             Instances[] splitData = new Instances[att.numValues()];
+             for (int j = 0; j < att.numValues(); j++) {
+                 splitData[j] = new Instances(data, data.numInstances());
+             }
+             Enumeration instEnum = data.enumerateInstances();
+             while (instEnum.hasMoreElements()) {
+                 Instance inst = (Instance) instEnum.nextElement();
+                 splitData[(int) inst.value(att)].add(inst);
+             }
+             for (int i = 0; i < splitData.length; i++) {
+                 splitData[i].compactify();
+             }
+
+             return splitData;
+         }
+         else{
+             return splitDataOnNumeric(data,att);
+         }
     }
 
+    /**
+     * Splits a dataset into 2 boolean instances according to the values of a nominal attribute
+     *
+     * @param data the data which is to be split
+     * @param att the attribute to be used for splitting
+     * @return the sets of instances produced by the split
+     */
     default Instances[] splitDataOnNumeric(Instances data, Attribute att){
+        //System.out.println("Att num values: " + att.numValues());
         Instances[] splitData = new Instances[2];
         splitData[0] = new Instances(data, 0); //Above
         splitData[1] = new Instances(data, 0); //Below
@@ -63,19 +78,22 @@ public interface AttributeSplitMeasure {
                     splitData[1].add(instanceToCheck);
                 }
             }
+            for (Instances splitDatum : splitData) {
+                splitDatum.compactify();
+            }
 
-            for (Instance x : splitData[0]){
+/*            for (Instance x : splitData[0]){
                 System.out.println("Above: " + x.value(att));
             }
             for (Instance x : splitData[1]){
                 System.out.println("Below: " + x.value(att));
-            }
+            }*/
             return splitData;
 
         }
 
         else {
-            System.out.println("Attribute is Numeric");
+            System.out.println("Attribute is Nominal");
             return splitData(data,att);
         }
 

@@ -36,7 +36,7 @@ import static ml_6002b_coursework.WekaTools.splitData;
 
 /**
 
-* Adaptation of the Id3 Weka classifier for use in machine learning coursework (6002B)
+ * Adaptation of the Id3 Weka classifier for use in machine learning coursework (6002B)
 
  <!-- globalinfo-start -->
  * Class for constructing an unpruned decision tree based on the ID3 algorithm. Can only deal with nominal attributes. No missing values allowed. Empty leaves may result in unclassified instances. For more information see: <br/>
@@ -63,24 +63,24 @@ import static ml_6002b_coursework.WekaTools.splitData;
  *
  <!-- options-start -->
  * Valid options are: <p/>
- * 
+ *
  * <pre> -D
  *  If set, classifier is run in debug mode and
  *  may output additional info to the console</pre>
- * 
+ *
  <!-- options-end -->
  *
  * @author Eibe Frank (eibe@cs.waikato.ac.nz)
- * @version $Revision: 6404 $ 
+ * @version $Revision: 6404 $
  */
 public class ID3Coursework
-  extends AbstractClassifier
-  implements TechnicalInformationHandler, Sourcable {
+        extends AbstractClassifier
+        implements TechnicalInformationHandler, Sourcable {
 
   /** for serialization */
   static final long serialVersionUID = -2693678647096322561L;
-  
-  /** The node's successors. */ 
+
+  /** The node's successors. */
   private ID3Coursework[] m_Successors;
 
   /** Attribute used for splitting. */
@@ -94,10 +94,14 @@ public class ID3Coursework
 
   /** Class attribute of dataset. */
   private Attribute m_ClassAttribute;
-
   private AttributeSplitMeasure attSplit = new IGAttributeSplitMeasure();
-  private AttributeSplitMeasure chiAttSplit = new ChiSquaredAttributeSplitMeasure();
-  private AttributeSplitMeasure giniAttSplit = new GiniAttributeSplitMeasure();
+
+  public ID3Coursework(AttributeSplitMeasure attributeSplitMeasure){
+    attSplit = attributeSplitMeasure;
+  }
+  public ID3Coursework(){
+  }
+
 
 
   /**
@@ -107,22 +111,22 @@ public class ID3Coursework
   public String globalInfo() {
 
     return  "Class for constructing an unpruned decision tree based on the ID3 "
-      + "algorithm. Can only deal with nominal attributes. No missing values "
-      + "allowed. Empty leaves may result in unclassified instances. For more "
-      + "information see: \n\n"
-      + getTechnicalInformation().toString();
+            + "algorithm. Can only deal with nominal attributes. No missing values "
+            + "allowed. Empty leaves may result in unclassified instances. For more "
+            + "information see: \n\n"
+            + getTechnicalInformation().toString();
   }
 
   /**
-   * Returns an instance of a TechnicalInformation object, containing 
+   * Returns an instance of a TechnicalInformation object, containing
    * detailed information about the technical background of this class,
    * e.g., paper reference or book this class is based on.
-   * 
+   *
    * @return the technical information about this class
    */
   public TechnicalInformation getTechnicalInformation() {
     TechnicalInformation 	result;
-    
+
     result = new TechnicalInformation(Type.ARTICLE);
     result.setValue(Field.AUTHOR, "R. Quinlan");
     result.setValue(Field.YEAR, "1986");
@@ -131,7 +135,7 @@ public class ID3Coursework
     result.setValue(Field.VOLUME, "1");
     result.setValue(Field.NUMBER, "1");
     result.setValue(Field.PAGES, "81-106");
-    
+
     return result;
   }
 
@@ -146,18 +150,15 @@ public class ID3Coursework
 
     // attributes
     result.enable(Capability.NOMINAL_ATTRIBUTES);
+    result.enable(Capability.NUMERIC_ATTRIBUTES);
 
     // class
     result.enable(Capability.NOMINAL_CLASS);
-
-    result.enable(Capability.NUMERIC_CLASS);
-    result.enable(Capability.NUMERIC_ATTRIBUTES);
-
     result.enable(Capability.MISSING_CLASS_VALUES);
 
     // instances
     result.setMinimumNumberInstances(0);
-    
+
     return result;
   }
 
@@ -175,7 +176,7 @@ public class ID3Coursework
     // remove instances with missing class
     data = new Instances(data);
     data.deleteWithMissingClass();
-    
+
     makeTree(data);
   }
 
@@ -195,37 +196,136 @@ public class ID3Coursework
       return;
     }
 
-    // Compute attribute with maximum information gain.
-    double[] infoGains = new double[data.numAttributes()];
-    Enumeration attEnum = data.enumerateAttributes();
-    while (attEnum.hasMoreElements()) {
-      Attribute att = (Attribute) attEnum.nextElement();
-      infoGains[att.index()] = attSplit.computeAttributeQuality(data, att);
-    }
-    m_Attribute = data.attribute(Utils.maxIndex(infoGains));
-    
-    
-    // Make leaf if information gain is zero. 
-    // Otherwise create successors.
-    if (Utils.eq(infoGains[m_Attribute.index()], 0)) {
-      m_Attribute = null;
-      m_Distribution = new double[data.numClasses()];
-      Enumeration instEnum = data.enumerateInstances();
-      while (instEnum.hasMoreElements()) {
-        Instance inst = (Instance) instEnum.nextElement();
-        m_Distribution[(int) inst.classValue()]++;
+    if(attSplit.getClass().getSimpleName().equals("IGAttributeSplitMeasure")){
+      // Compute attribute with maximum information gain.
+      double[] infoGains = new double[data.numAttributes()];
+      Enumeration attEnum = data.enumerateAttributes();
+      while (attEnum.hasMoreElements()) {
+        Attribute att = (Attribute) attEnum.nextElement();
+        infoGains[att.index()] = attSplit.computeAttributeQuality(data, att);
       }
-      Utils.normalize(m_Distribution);
-      m_ClassValue = Utils.maxIndex(m_Distribution);
-      m_ClassAttribute = data.classAttribute();
-    } else {
-      Instances[] splitData = attSplit.splitData(data, m_Attribute);
-      m_Successors = new ID3Coursework[m_Attribute.numValues()];
-      for (int j = 0; j < m_Attribute.numValues(); j++) {
-        m_Successors[j] = new ID3Coursework();
-        m_Successors[j].makeTree(splitData[j]);
+      m_Attribute = data.attribute(Utils.maxIndex(infoGains));
+
+      // Make leaf if information gain is zero.
+      // Otherwise create successors.
+      if (Utils.eq(infoGains[m_Attribute.index()], 0)) {
+        m_Attribute = null;
+        m_Distribution = new double[data.numClasses()];
+        Enumeration instEnum = data.enumerateInstances();
+        while (instEnum.hasMoreElements()) {
+          Instance inst = (Instance) instEnum.nextElement();
+          m_Distribution[(int) inst.classValue()]++;
+        }
+        Utils.normalize(m_Distribution);
+        m_ClassValue = Utils.maxIndex(m_Distribution);
+        m_ClassAttribute = data.classAttribute();
+      } else {
+        Instances[] splitData = attSplit.splitData(data, m_Attribute);
+        m_Successors = new ID3Coursework[m_Attribute.numValues()];
+        for (int j = 0; j < m_Attribute.numValues(); j++) {
+          m_Successors[j] = new ID3Coursework();
+          m_Successors[j].makeTree(splitData[j]);
+        }
       }
     }
+
+
+    else if (attSplit.getClass().getSimpleName().equals("GiniAttributeSplitMeasure")){
+      GiniAttributeSplitMeasure giniAttributeSplitMeasure = new GiniAttributeSplitMeasure();
+
+      // Find best attribute (split with maximum Gini gain)
+      double[] giniIndex = new double[data.numAttributes() - 1];
+
+      if (data.numAttributes() == 1) {
+        data.insertAttributeAt(m_ClassAttribute, 0);
+      }
+
+      Enumeration giniEnum = data.enumerateAttributes();
+      while (giniEnum.hasMoreElements()) {
+        Attribute att = (Attribute) giniEnum.nextElement();
+        giniIndex[att.index()] = giniAttributeSplitMeasure.computeAttributeQuality(data, att);
+      }
+      m_Attribute = data.attribute(Utils.maxIndex(giniIndex));
+
+      // Make leaf if gini index is zero.
+      if (giniIndex[m_Attribute.index()] == 0
+              || giniIndex[m_Attribute.index()] == 1) {
+        m_Attribute = null;
+        m_Distribution = new double[data.numClasses()];
+        Enumeration instEnum = data.enumerateInstances();
+        while (instEnum.hasMoreElements()) {
+          Instance inst = (Instance) instEnum.nextElement();
+          m_Distribution[(int) inst.classValue()]++;
+        }
+        Utils.normalize(m_Distribution);
+        m_ClassValue = Utils.maxIndex(m_Distribution);
+        m_ClassAttribute = data.classAttribute();
+      }
+      else {
+        Instances[] splitData;
+        if (m_Attribute.isNominal()) {
+          splitData = giniAttributeSplitMeasure.splitData(data, m_Attribute);
+          m_Successors = new ID3Coursework[m_Attribute.numValues()];
+        } else {
+          splitData = giniAttributeSplitMeasure.splitDataOnNumeric(data, m_Attribute);
+          m_Successors = new ID3Coursework[2];
+        }
+        for (int j = 0; j < m_Attribute.numValues(); j++) {
+          m_Successors[j] = new ID3Coursework(giniAttributeSplitMeasure);
+          splitData[j].deleteAttributeAt(m_Attribute.index());
+          m_Successors[j].makeTree(splitData[j]);
+        }
+
+      }
+    }
+
+    else if (attSplit.getClass().getSimpleName().equals("ChiSquaredAttributeSplitMeasure")){
+      ChiSquaredAttributeSplitMeasure chiSquaredAttributeSplitMeasure = new ChiSquaredAttributeSplitMeasure();
+      final double[] infoChi = new double[data.numAttributes() - 1];
+      double split = 0.05;
+
+      if (data.numAttributes() == 1) {
+        data.insertAttributeAt(m_ClassAttribute, 0);
+      }
+
+      Enumeration chiEnum = data.enumerateAttributes();
+      while (chiEnum.hasMoreElements()) {
+        Attribute att = (Attribute) chiEnum.nextElement();
+        infoChi[att.index()] = chiSquaredAttributeSplitMeasure.computeAttributeQuality(data, att);
+      }
+      m_Attribute = data.attribute(Utils.minIndex(infoChi));
+
+      if (split != 0 && infoChi[m_Attribute.index()] > split || infoChi[m_Attribute.index()] == 0
+              || infoChi[m_Attribute.index()] == 1) {
+        m_Attribute = null;
+        m_Distribution = new double[data.numClasses()];
+        Enumeration instEnum = data.enumerateInstances();
+        while (instEnum.hasMoreElements()) {
+          Instance inst = (Instance) instEnum.nextElement();
+          m_Distribution[(int) inst.classValue()]++;
+        }
+        Utils.normalize(m_Distribution);
+        m_ClassValue = Utils.maxIndex(m_Distribution);
+        m_ClassAttribute = data.classAttribute();
+      }
+      else {
+        Instances[] splitData;
+        if (m_Attribute.isNominal()) {
+          splitData = chiSquaredAttributeSplitMeasure.splitData(data, m_Attribute);
+          m_Successors = new ID3Coursework[m_Attribute.numValues()];
+        } else {
+          splitData = chiSquaredAttributeSplitMeasure.splitDataOnNumeric(data, m_Attribute);
+          m_Successors = new ID3Coursework[2];
+        }
+        for (int j = 0; j < m_Successors.length; j++) {
+          m_Successors[j] = new ID3Coursework(chiSquaredAttributeSplitMeasure);
+          splitData[j].deleteAttributeAt(m_Attribute.index());
+          m_Successors[j].makeTree(splitData[j]);
+        }
+      }
+
+    }
+
   }
 
   /**
@@ -235,18 +335,26 @@ public class ID3Coursework
    * @return the classification
    * @throws NoSupportForMissingValuesException if instance has missing values
    */
-  public double classifyInstance(Instance instance) 
-    throws NoSupportForMissingValuesException {
+  public double classifyInstance(Instance instance)
+          throws NoSupportForMissingValuesException {
 
     if (instance.hasMissingValue()) {
       throw new NoSupportForMissingValuesException("Id3: no missing values, "
-                                                   + "please.");
+              + "please.");
     }
     if (m_Attribute == null) {
       return m_ClassValue;
     } else {
-      return m_Successors[(int) instance.value(m_Attribute)].
-        classifyInstance(instance);
+      if (m_Attribute.isNominal()){
+        return m_Successors[(int) instance.value(m_Attribute)].
+                classifyInstance(instance);
+      }
+      else{
+        if (instance.value(m_Attribute) > 5)
+          return m_Successors[0].classifyInstance(instance);
+        else
+          return m_Successors[1].classifyInstance(instance);
+      }
     }
   }
 
@@ -257,18 +365,27 @@ public class ID3Coursework
    * @return the class distribution for the given instance
    * @throws NoSupportForMissingValuesException if instance has missing values
    */
-  public double[] distributionForInstance(Instance instance) 
-    throws NoSupportForMissingValuesException {
+  public double[] distributionForInstance(Instance instance)
+          throws NoSupportForMissingValuesException {
 
     if (instance.hasMissingValue()) {
       throw new NoSupportForMissingValuesException("Id3: no missing values, "
-                                                   + "please.");
+              + "please.");
     }
     if (m_Attribute == null) {
       return m_Distribution;
-    } else { 
-      return m_Successors[(int) instance.value(m_Attribute)].
-        distributionForInstance(instance);
+    } else {
+      if (m_Attribute.isNominal()){
+        return m_Successors[(int) instance.value(m_Attribute)].
+                distributionForInstance(instance);
+      }
+      else{
+        if (instance.value(m_Attribute) > 5)
+          return m_Successors[0].distributionForInstance(instance);
+        else
+          return m_Successors[1].distributionForInstance(instance);
+      }
+
     }
   }
 
@@ -295,13 +412,13 @@ public class ID3Coursework
   private String toString(int level) {
 
     StringBuffer text = new StringBuffer();
-    
+
     if (m_Attribute == null) {
       if (Utils.isMissingValue(m_ClassValue)) {
         text.append(": null");
       } else {
         text.append(": " + m_ClassAttribute.value((int) m_ClassValue));
-      } 
+      }
     } else {
       for (int j = 0; j < m_Attribute.numValues(); j++) {
         text.append("\n");
@@ -317,7 +434,7 @@ public class ID3Coursework
 
   /**
    * Adds this tree recursively to the buffer.
-   * 
+   *
    * @param id          the unqiue id for the method
    * @param buffer      the buffer to add the source code to
    * @return            the last ID being used
@@ -328,10 +445,10 @@ public class ID3Coursework
     int                 i;
     int                 newID;
     StringBuffer[]      subBuffers;
-    
+
     buffer.append("\n");
     buffer.append("  protected static double node" + id + "(Object[] i) {\n");
-    
+
     // leaf?
     if (m_Attribute == null) {
       result = id;
@@ -348,7 +465,7 @@ public class ID3Coursework
     } else {
       buffer.append("    checkMissing(i, " + m_Attribute.index() + ");\n\n");
       buffer.append("    // " + m_Attribute.name() + "\n");
-      
+
       // subtree calls
       subBuffers = new StringBuffer[m_Attribute.numValues()];
       newID = id;
@@ -359,8 +476,8 @@ public class ID3Coursework
         if (i > 0) {
           buffer.append("else ");
         }
-        buffer.append("if (((String) i[" + m_Attribute.index() 
-            + "]).equals(\"" + m_Attribute.value(i) + "\"))\n");
+        buffer.append("if (((String) i[" + m_Attribute.index()
+                + "]).equals(\"" + m_Attribute.value(i) + "\"))\n");
         buffer.append("      return node" + newID + "(i);\n");
 
         subBuffers[i] = new StringBuffer();
@@ -368,7 +485,7 @@ public class ID3Coursework
       }
       buffer.append("    else\n");
       buffer.append("      throw new IllegalArgumentException(\"Value '\" + i["
-          + m_Attribute.index() + "] + \"' is not allowed!\");\n");
+              + m_Attribute.index() + "] + \"' is not allowed!\");\n");
       buffer.append("  }\n");
 
       // output subtree code
@@ -376,13 +493,13 @@ public class ID3Coursework
         buffer.append(subBuffers[i].toString());
       }
       subBuffers = null;
-      
+
       result = newID;
     }
-    
+
     return result;
   }
-  
+
   /**
    * Returns a string that describes the classifier as source. The
    * classifier will be contained in a class with the given name (there may
@@ -403,14 +520,14 @@ public class ID3Coursework
   public String toSource(String className) throws Exception {
     StringBuffer        result;
     int                 id;
-    
+
     result = new StringBuffer();
 
     result.append("class " + className + " {\n");
     result.append("  private static void checkMissing(Object[] i, int index) {\n");
     result.append("    if (i[index] == null)\n");
     result.append("      throw new IllegalArgumentException(\"Null values "
-        + "are not allowed!\");\n");
+            + "are not allowed!\");\n");
     result.append("  }\n\n");
     result.append("  public static double classify(Object[] i) {\n");
     id = 0;
@@ -421,35 +538,14 @@ public class ID3Coursework
 
     return result.toString();
   }
-  
+
   /**
    * Returns the revision string.
-   * 
+   *
    * @return		the revision
    */
   public String getRevision() {
     return RevisionUtils.extract("$Revision: 6404 $");
-  }
-
-  public static AttributeSplitMeasure setOptions(String splitMeasure){
-    switch(splitMeasure)
-    {
-      case "IGAttributeSplitMeasure":
-        return new IGAttributeSplitMeasure();
-      case "GiniAttributeSplitMeasure":
-        return new GiniAttributeSplitMeasure();
-      case "ChiSquaredAttributeSplitMeasure":
-        return new ChiSquaredAttributeSplitMeasure();
-      default:
-        System.out.println("no match");
-        return new IGAttributeSplitMeasure();
-    }
-  }
-
-  enum SplitMeasuresEnum {
-    IGAttributeSplitMeasure,
-    GiniAttributeSplitMeasure,
-    ChiSquaredAttributeSplitMeasure
   }
 
   /**
@@ -458,36 +554,33 @@ public class ID3Coursework
    * @param args the options for the classifier
    */
   public static void main(String[] args) throws Exception {
-    runClassifier(new ID3Coursework(), args);
+    //runClassifier(new ID3Coursework(), args);
 
     ID3Coursework id3 = new ID3Coursework();
-    Attribute att = null;
-    Instances[] splitData = new Instances[0];
 
-    Instances currentData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/optdigits.arff");
-    //currentData.setClassIndex(currentData.numAttributes() - 1);
-    Enumeration enumeration = currentData.enumerateAttributes();
+    GiniAttributeSplitMeasure giniAttributeSplitMeasure = new GiniAttributeSplitMeasure();
+    ChiSquaredAttributeSplitMeasure chiSquaredAttributeSplitMeasure = new ChiSquaredAttributeSplitMeasure();
 
-    for(SplitMeasuresEnum splitMeasure : SplitMeasuresEnum.values()){
-      AttributeSplitMeasure classifier = setOptions(splitMeasure.toString());
-      while(enumeration.hasMoreElements()){
-        att = (Attribute) enumeration.nextElement();
-        splitData = classifier.splitData(currentData, att);
-      }
+    Instances chinatownTrain = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Chinatown_TRAIN.arff");
+    Instances chinatownTest = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Chinatown_TEST.arff");
+    Instances optdigits = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Chinatown_TRAIN.arff");
 
-      for (Instances s : splitData){
-        id3.buildClassifier(s);
-        System.out.println("ID3 using measure " + splitMeasure + " on JW Problem has test accuracy = " +
-                id3.toString());
-        //System.out.println(s.toSummaryString());
-      }
+    Instances[] splitData = splitData(optdigits, 0.5);
+    Instances train = splitData[0];
+    Instances test = splitData[1];
+    //train.setClassIndex(train.numAttributes() - 1);
+    //test.setClassIndex(test.numAttributes() - 1);
 
-
-
+    try{
+      id3 = new ID3Coursework();
+      id3.attSplit = chiSquaredAttributeSplitMeasure;
+      id3.buildClassifier(optdigits);
+      System.out.println("Id3 using measure " + id3.attSplit.getClass().getSimpleName() + " on JW Problem has test accuracy = "
+              + WekaTools.accuracy(id3, optdigits));
     }
-
-    //TODO: SETUP USING RANDOM SPLIT
-
+    catch (Exception e){
+      e.printStackTrace();
+    }
 
   }
 }

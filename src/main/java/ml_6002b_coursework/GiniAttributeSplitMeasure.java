@@ -23,13 +23,22 @@ public class GiniAttributeSplitMeasure implements AttributeSplitMeasure{
             splitData = splitDataOnNumeric(data, att);
         }
 
-        for (int i = 0; i < att.numValues(); i++) {
-            if (splitData[i].numInstances() > 0) {
-                total += splitData[i].sumOfWeights();
+        if (att.isNominal()) {
+            for (int i = 0; i < att.numValues(); i++) {
+                if (splitData[i].numInstances() > 0) {
+                    total += splitData[i].sumOfWeights();
+                }
+            }
+        }
+        else {
+            for(int i = 0; i < splitData.length; i++){
+                if (splitData[i].numInstances() > 0) {
+                    total += splitData[i].sumOfWeights();
+                }
             }
         }
 
-        for (int i = 0; i < att.numValues(); i++) {
+        for (int i = 0; i < splitData.length; i++) {
             //giniIndex = 0;
             if (splitData[i].numInstances() > 0) {
                 giniIndex += (computeGini(splitData[i]) * ((double) splitData[i].numInstances() / total));
@@ -57,12 +66,20 @@ public class GiniAttributeSplitMeasure implements AttributeSplitMeasure{
     }
 
     public static void main(String[] args) throws Exception {
-        Instances currentData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Diagnosis_TRAIN.arff");
+/*        Instances currentData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Diagnosis_TRAIN.arff");
         Enumeration enumeration = currentData.enumerateAttributes();
         GiniAttributeSplitMeasure giniAttributeSplitMeasure = new GiniAttributeSplitMeasure();
         while(enumeration.hasMoreElements()){
             Attribute att = (Attribute) enumeration.nextElement();
             System.out.println("measure Gini for attribute " + att.name() + " splitting diagnosis = " + giniAttributeSplitMeasure.computeAttributeQuality(currentData, att));
+        }*/
+
+        Instances continuousData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Chinatown_TRAIN.arff");
+        Enumeration continuousEnumeration = continuousData.enumerateAttributes();
+        IGAttributeSplitMeasure ig2 = new IGAttributeSplitMeasure();
+        while(continuousEnumeration.hasMoreElements()){
+            Attribute att = (Attribute) continuousEnumeration.nextElement();
+            System.out.println("measure Info Gain for attribute " + att.name() + " splitting diagnosis = " + ig2.computeAttributeQuality(continuousData, att));
         }
     }
 }

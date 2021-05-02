@@ -148,7 +148,7 @@ public class WekaTools {
     }
 
     public static void main(String[] args) throws Exception {
-        MajorityClassClassifier mc = new MajorityClassClassifier();
+        /*MajorityClassClassifier mc = new MajorityClassClassifier();
         Instances currentData = loadClassificationData("C:\\Users\\" +
                 "jpebr\\Desktop\\tsml-master\\tsml\\src\\main\\java\\lab_sheets\\Lab1\\Arsenal_Train.arff");
 
@@ -166,7 +166,7 @@ public class WekaTools {
         //Generate the confusion matrix for a single test split (all the data should be in one column).
         int[] predicted = classifyInstances(mc,test);
         int[] actual = getClassValues(train);
-        confusionMatrix(predicted, actual);
+        confusionMatrix(predicted, actual);*/
 
     }
 
