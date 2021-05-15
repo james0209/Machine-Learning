@@ -1,5 +1,7 @@
 package ml_6002b_coursework;
 
+import static java.lang.Double.max;
+
 public class AttributeMeasures {
     private static final double log2 = Math.log(2);
 
@@ -79,7 +81,55 @@ public class AttributeMeasures {
         }
     }
 
-    public static double measureChiSquared(double[][] array){
+    private static double chiSquared(double[][] split, boolean yates){
+        double chi = 0, n = 0;
+
+        int attributeValues = split.length;
+        int classes = split[0].length;
+        if (attributeValues <= 1 && classes <= 1 || split[0].length == 0)
+            return 0;
+
+        double[] valueTotals = new double [attributeValues];
+        double[] classTotals = new double [classes];
+
+        for (int row = 0; row < attributeValues; row++) {
+            for (int col = 0; col < classes; col++) {
+                double classCount = split[row][col];
+                valueTotals[row] += classCount;
+                classTotals[col] += classCount;
+                n += classCount;
+            }
+        }
+
+        for (int row = 0; row < attributeValues; row++) {
+            if (valueTotals[row] > 0) {
+                for (int col = 0; col < classes; col++) {
+                    if (classTotals[col] > 0) {
+                        double expected = valueTotals[row] * (classTotals[col] / n);
+                        double diff = Math.abs(split[row][col] - expected);
+                        if(yates){
+                            diff -= -0.5;
+                        }
+                        chi += diff * diff / expected;
+                    }
+                }
+            }
+        }
+        return chi;
+    }
+    public static double measureChiSquared(double[][] split) {
+        // measureChiSquared returns the chi-squared statistic for the contingency table
+        return chiSquared(split, false);
+    }
+
+    public static double measureChiSquaredYates(double[][] split) {
+        // measureChiSquaredYates returns the chi-squared statistic after applying the Yates correction.
+        // We did not cover this feature in the lecture, so it is up to you to find out how to do it.
+        // Apply Yates' correction if wanted
+        return chiSquared(split, true);
+    }
+
+    /*public static double measureChiSquared(double[][] array){
         double chiSquareValue = 0.0;
         try{
             int row, col;
@@ -171,7 +221,7 @@ public class AttributeMeasures {
             e.printStackTrace();
         }
         return chiSquareYatesValue;
-    }
+    }*/
 
 
 

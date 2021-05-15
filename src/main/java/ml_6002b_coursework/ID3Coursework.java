@@ -214,7 +214,6 @@ public class ID3Coursework extends AbstractClassifier
       Random random= new Random();
       m_Attribute = null;
       m_ClassValue = Utils.missingValue();
-      //m_ClassValue = random.ints(0, numClasses).findFirst().getAsInt();
       m_Distribution = new double[numClasses];
       return;
     }
@@ -234,15 +233,11 @@ public class ID3Coursework extends AbstractClassifier
       Attribute att = (Attribute) attEnum.nextElement();
       infoGains[att.index()] = attSplit.computeAttributeQuality(data, att);
     }
-    //System.out.println(Arrays.toString(infoGains));
-    //System.out.println(Utils.maxIndex(infoGains));
     m_Attribute = data.attribute(Utils.maxIndex(infoGains));
-    System.out.println("index: " + infoGains[m_Attribute.index()]);
 
     // Make leaf if information gain is zero.
     // Otherwise create successors.
     if (Utils.eq(infoGains[m_Attribute.index()], 0)) {
-      System.out.println("create leaf for attribute: " + m_Attribute.name());
       m_Attribute = null;
       m_Distribution = new double[numClasses];
       Enumeration instEnum = data.enumerateInstances();
@@ -254,7 +249,6 @@ public class ID3Coursework extends AbstractClassifier
       m_ClassValue = Utils.maxIndex(m_Distribution);
       m_ClassAttribute = data.classAttribute();
     } else {
-      System.out.println("create split for attribute: " + m_Attribute.name());
       Instances[] splitData;
       if (m_Attribute.isNominal()) {
         splitData = attSplit.splitData(data, m_Attribute);
@@ -268,8 +262,6 @@ public class ID3Coursework extends AbstractClassifier
       for (int j = 0; j < numValues; j++) {
         m_Successors[j] = new ID3Coursework();
         m_Successors[j].attSplit = attSplit;
-        //System.out.println(m_Successors[j].attSplit.getClass().getSimpleName());
-        //m_Successors[j].setAtt(true, 'I');
         m_Successors[j].makeTree(splitData[j]);
       }
     }
@@ -501,11 +493,16 @@ public class ID3Coursework extends AbstractClassifier
    * @exception Exception if an option is not supported
    */
   public void setOptions(String[] options) throws Exception {
+try{
+  setAtt(Utils.getFlag('I', options), 'I');
+  setAtt(Utils.getFlag('G', options), 'G');
+  setAtt(Utils.getFlag('C', options), 'C');
+  setAtt(Utils.getFlag('Y', options), 'Y');
+}
+catch (Exception e){
+  System.out.println("Split measure not found");
+}
 
-    setAtt(Utils.getFlag('I', options), 'I');
-    setAtt(Utils.getFlag('G', options), 'G');
-    setAtt(Utils.getFlag('C', options), 'C');
-    setAtt(Utils.getFlag('Y', options), 'Y');
   }
 
   /**
@@ -585,19 +582,17 @@ public class ID3Coursework extends AbstractClassifier
       ID3Coursework id3 = new ID3Coursework();
       String[] options = new String[1];
 
-  /*    options[0] = "-I";
+      options[0] = "-I";
       id3.setOptions(options);
       id3.buildClassifier(optdigitsTrain);
-      System.out.println(id3.getAtt());
       System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
               + WekaTools.accuracy(id3, optdigitsTest));
 
       options[0] = "-G";
       id3.setOptions(options);
       id3.buildClassifier(optdigitsTrain);
-      System.out.println(id3.getAtt());
       System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
-              + WekaTools.accuracy(id3, optdigitsTest));*/
+              + WekaTools.accuracy(id3, optdigitsTest));
 
       options[0] = "-C";
       id3.setOptions(options);
@@ -605,12 +600,11 @@ public class ID3Coursework extends AbstractClassifier
       System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
               + WekaTools.accuracy(id3, optdigitsTest));
 
-      /*ID3Coursework yatesID3 = new ID3Coursework(new ChiSquaredAttributeSplitMeasure(true));
       options[0] = "-Y";
-      yatesID3.setOptions(options);
-      yatesID3.buildClassifier(optdigits);
-      System.out.println("Id3 using measure " + yatesID3.getAtt() + " yates on JW Problem has test accuracy = "
-              + WekaTools.accuracy(yatesID3, optdigits));*/
+      id3.setOptions(options);
+      id3.buildClassifier(optdigitsTrain);
+      System.out.println("Id3 using measure " + id3.getAtt() + " yates on JW Problem has test accuracy = "
+              + WekaTools.accuracy(id3, optdigitsTest));
 
     }
     catch (Exception e){

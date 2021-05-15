@@ -23,24 +23,22 @@ public interface AttributeSplitMeasure {
      * @param att the attribute to be used for splitting
      * @return the sets of instances produced by the split
      */
-     default Instances[] splitData(Instances data, Attribute att) {
-         if (att.isNumeric()){
-             return splitDataOnNumeric(data, att).getKey();
-         }
-             Instances[] splitData = new Instances[att.numValues()];
-             for (int j = 0; j < att.numValues(); j++) {
-                 splitData[j] = new Instances(data, data.numInstances());
-             }
-             Enumeration instEnum = data.enumerateInstances();
-             while (instEnum.hasMoreElements()) {
-                 Instance inst = (Instance) instEnum.nextElement();
-                 splitData[(int) inst.value(att)].add(inst);
-             }
-             for (int i = 0; i < splitData.length; i++) {
-                 splitData[i].compactify();
-             }
-
-             return splitData;
+    default Instances[] splitData(Instances data, Attribute att){
+        if (att.isNumeric())
+            return splitDataOnNumeric(data, att).getKey();
+        Instances[] splitData = new Instances[att.numValues()];
+        for (int j = 0; j < att.numValues(); j++) {
+            splitData[j] = new Instances(data, data.numInstances());
+        }
+        Enumeration instEnum = data.enumerateInstances();
+        while (instEnum.hasMoreElements()) {
+            Instance inst = (Instance) instEnum.nextElement();
+            splitData[(int) inst.value(att)].add(inst);
+        }
+        for (int i = 0; i < splitData.length; i++) {
+            splitData[i].compactify();
+        }
+        return splitData;
     }
 
     /**
