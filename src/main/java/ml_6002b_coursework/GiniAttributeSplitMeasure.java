@@ -3,83 +3,96 @@ package ml_6002b_coursework;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.Utils;
 
 import java.util.Enumeration;
 
 import static ml_6002b_coursework.WekaTools.loadClassificationData;
 
-public class GiniAttributeSplitMeasure implements AttributeSplitMeasure{
+public class GiniAttributeSplitMeasure implements AttributeSplitMeasure {
+
+    /**
+     * Computes gini index for an attribute.
+     *
+     * @param data the data for which info gain is to be computed
+     * @param att the attribute
+     * @return the gini index for the given attribute and data
+     */
     @Override
-    public double computeAttributeQuality(Instances data, Attribute att) throws Exception {
-        double giniIndex = 0, total = 0;
+    public double computeAttributeQuality(Instances data, Attribute att) {
+
+        // Gini at root node
+        double gini = computeImpurity(data);
 
         Instances[] splitData;
+        int numValues;
 
         if (att.isNominal()) {
             splitData = splitData(data, att);
+            numValues = att.numValues();
         }
         else {
-            splitData = splitDataOnNumeric(data, att);
+            splitData = splitDataOnNumeric(data, att).getKey();
+            numValues = splitData.length;
         }
 
-        if (att.isNominal()) {
-            for (int i = 0; i < att.numValues(); i++) {
-                if (splitData[i].numInstances() > 0) {
-                    total += splitData[i].sumOfWeights();
-                }
+        for (int j = 0; j < splitData.length; j++) {
+            if (splitData[j].numInstances() > 0) {
+                gini -= ((double)splitData[j].numInstances() /
+                        (double)data.numInstances()) *
+                        computeImpurity(splitData[j]);
             }
         }
-        else {
-            for(int i = 0; i < splitData.length; i++){
-                if (splitData[i].numInstances() > 0) {
-                    total += splitData[i].sumOfWeights();
-                }
-            }
-        }
-
-        for (int i = 0; i < splitData.length; i++) {
-            //giniIndex = 0;
-            if (splitData[i].numInstances() > 0) {
-                giniIndex += (computeGini(splitData[i]) * ((double) splitData[i].numInstances() / total));
-            }
-        }
-
-        return giniIndex;
+        return gini;
     }
 
-    private double computeGini(Instances data) throws Exception {
-        double impurity=0;
+    /**
+     * Computes the impurity of a dataset.
+     *
+     * @param data the data for which impurity is to be computed
+     * @return the impurity of the data's class distribution
+     */
+    private double computeImpurity(Instances data) {
+
         double [] classCounts = new double[data.numClasses()];
+        double impurity = 1.0;
+        double numInstances = data.numInstances();
+
         Enumeration instEnum = data.enumerateInstances();
         while (instEnum.hasMoreElements()) {
             Instance inst = (Instance) instEnum.nextElement();
-            classCounts[(int) inst.classValue()]++;
+            classCounts[(int)inst.classValue()]++;
         }
-        for (int j = 0; j < data.numClasses(); j++) {
-            if (classCounts[j] > 0) {
-                impurity += Math.pow((classCounts[j]/(double)data.numInstances()),2);
+
+        for (double classCount : classCounts) {
+            if (classCount > 0) {
+                double p = classCount / numInstances;
+                impurity -= p * p;
             }
         }
-        double returnValue = (1 - impurity);
-        return returnValue;
+
+        return impurity;
     }
 
-    public static void main(String[] args) throws Exception {
-/*        Instances currentData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Diagnosis_TRAIN.arff");
+    @Override
+    public String toString() {
+        return "-G: Attribute is Gini Index.";
+    }
+
+    public static void main (String[] args) throws Exception {
+        Instances currentData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Diagnosis_TRAIN.arff");
         Enumeration enumeration = currentData.enumerateAttributes();
         GiniAttributeSplitMeasure giniAttributeSplitMeasure = new GiniAttributeSplitMeasure();
         while(enumeration.hasMoreElements()){
             Attribute att = (Attribute) enumeration.nextElement();
             System.out.println("measure Gini for attribute " + att.name() + " splitting diagnosis = " + giniAttributeSplitMeasure.computeAttributeQuality(currentData, att));
-        }*/
+        }
 
-        Instances continuousData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Chinatown_TRAIN.arff");
+/*        Instances continuousData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Chinatown_TRAIN.arff");
         Enumeration continuousEnumeration = continuousData.enumerateAttributes();
-        IGAttributeSplitMeasure ig2 = new IGAttributeSplitMeasure();
+        GiniAttributeSplitMeasure giniAttributeSplitMeasure2 = new GiniAttributeSplitMeasure();
         while(continuousEnumeration.hasMoreElements()){
             Attribute att = (Attribute) continuousEnumeration.nextElement();
-            System.out.println("measure Info Gain for attribute " + att.name() + " splitting diagnosis = " + ig2.computeAttributeQuality(continuousData, att));
-        }
+            System.out.println("measure Gini for attribute " + att.name() + " splitting diagnosis = " + giniAttributeSplitMeasure2.computeAttributeQuality(continuousData, att));
+        }*/
     }
 }

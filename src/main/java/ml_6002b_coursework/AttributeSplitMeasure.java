@@ -5,9 +5,7 @@ import weka.core.AttributeStats;
 import weka.core.Instance;
 import weka.core.Instances;
 
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Interface for alternative attribute split measures for Part 2.2 of the coursework
@@ -26,7 +24,9 @@ public interface AttributeSplitMeasure {
      * @return the sets of instances produced by the split
      */
      default Instances[] splitData(Instances data, Attribute att) {
-         if (att.isNominal()) {
+         if (att.isNumeric()){
+             return splitDataOnNumeric(data, att).getKey();
+         }
              Instances[] splitData = new Instances[att.numValues()];
              for (int j = 0; j < att.numValues(); j++) {
                  splitData[j] = new Instances(data, data.numInstances());
@@ -41,10 +41,6 @@ public interface AttributeSplitMeasure {
              }
 
              return splitData;
-         }
-         else{
-             return splitDataOnNumeric(data,att);
-         }
     }
 
     /**
@@ -54,7 +50,7 @@ public interface AttributeSplitMeasure {
      * @param att the attribute to be used for splitting
      * @return the sets of instances produced by the split
      */
-    default Instances[] splitDataOnNumeric(Instances data, Attribute att){
+    /*default Instances[] splitDataOnNumeric(Instances data, Attribute att){
         //System.out.println("Att num values: " + att.numValues());
         Instances[] splitData = new Instances[2];
         splitData[0] = new Instances(data, 0); //Above
@@ -66,7 +62,7 @@ public interface AttributeSplitMeasure {
             double max = as.numericStats.max;
             double min = as.numericStats.min;
             double random = ((Math.random() * (max - min)) + min);
-            System.out.println("Max: " + max + " Min: " + min + " Random: " + random);
+            //System.out.println("Max: " + max + " Min: " + min + " Random: " + random);
 
             for(int i = 0; i < data.numInstances(); i++)
             {
@@ -82,12 +78,12 @@ public interface AttributeSplitMeasure {
                 splitDatum.compactify();
             }
 
-/*            for (Instance x : splitData[0]){
+*//*            for (Instance x : splitData[0]){
                 System.out.println("Above: " + x.value(att));
             }
             for (Instance x : splitData[1]){
                 System.out.println("Below: " + x.value(att));
-            }*/
+            }*//*
             return splitData;
 
         }
@@ -95,6 +91,52 @@ public interface AttributeSplitMeasure {
         else {
             System.out.println("Attribute is Nominal");
             return splitData(data,att);
+        }
+
+
+    }*/
+
+    default Map.Entry<Instances[], Double> splitDataOnNumeric(Instances data, Attribute att){{
+        //System.out.println("Att num values: " + att.numValues());
+        Instances[] splitData = new Instances[2];
+        splitData[0] = new Instances(data, 0); //Above
+        splitData[1] = new Instances(data, 0); //Below
+
+            AttributeStats as = data.attributeStats(att.index());
+
+            double max = as.numericStats.max;
+            double min = as.numericStats.min;
+            double random = ((Math.random() * (max - min)) + min);
+            //System.out.println("Max: " + max + " Min: " + min + " Random: " + random);
+
+            for(int i = 0; i < data.numInstances(); i++)
+            {
+                Instance instanceToCheck = data.instance(i);
+                if (instanceToCheck.value(att) > random) {
+                    splitData[0].add(instanceToCheck);
+                }
+                else {
+                    splitData[1].add(instanceToCheck);
+                }
+            }
+            for (Instances splitDatum : splitData) {
+                splitDatum.compactify();
+            }
+
+            Map<Instances[], Double>
+                    result = Collections
+                    .singletonMap(splitData, random);
+
+            Map.Entry<Instances[], Double> entry = new AbstractMap.SimpleEntry<>(splitData, random);
+
+/*            for (Instance x : splitData[0]){
+                System.out.println("Above: " + x.value(att));
+            }
+            for (Instance x : splitData[1]){
+                System.out.println("Below: " + x.value(att));
+            }*/
+            return entry;
+
         }
 
 

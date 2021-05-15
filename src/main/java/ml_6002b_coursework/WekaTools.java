@@ -23,7 +23,6 @@ public class WekaTools {
     public static int[][] confusionMatrix(int[] predicted, int[] actual){
         int[][] confusionMatrix = new int[predicted.length][actual.length];
 
-        // FIXME: Implement logic for confusionMatrix here
         for (int i = 0; i < predicted.length; i++) {
             for (int j = 0; j < actual.length; j++) {
                 int prediction = predicted[i];
@@ -72,7 +71,7 @@ public class WekaTools {
     }
 
     //SPLIT DATA
-    public static Instances[] splitData(Instances all, double proportion){
+   public static Instances[] splitData(Instances all, double proportion){
         int numInstances = all.numInstances();
         Instances[] split = new Instances[2];
 
@@ -92,21 +91,37 @@ public class WekaTools {
         return split;
     }
 
+/*    public static Instances[] splitData(Instances all, double proportion){
+        Random r = new Random(System.currentTimeMillis());
+        all.randomize(r);
+        Instances[] split = new Instances[2];
+        split[0] = new Instances(all);
+        split[1] = new Instances(all, 0);
+        int n = (int) Math.round(proportion * all.numInstances());
+
+        while(split[0].numInstances() != n){
+            split[1].add(split[0].get(n));
+            split[0].remove(n);
+        }
+        return split;
+    }*/
+
     //MEASURE ACCURACY
     public static double accuracy(Classifier c, Instances test) throws Exception {
-        int numInstances = data.numInstances();
-
-        int correct=0;
+        double count = 0;
+        double correct = 0;
 
         for(Instance instance : test){
-            int pred=(int)c.classifyInstance(instance);
-            int actual = (int)instance.classValue();
+            double result = c.classifyInstance(instance);
+            double actual = instance.classValue();
 
-            if(pred==actual)
+            if(result == actual){
                 correct++;
+            }
+            count++;
         }
         //The accuracy of the classifier is then the number correct divided by the number of instances
-        double accuracy = (correct/(double)data.numInstances());
+        double accuracy = ((correct/count)*100);
         return accuracy;
     }
 
