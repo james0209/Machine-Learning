@@ -30,10 +30,7 @@ import weka.core.Capabilities.Capability;
 import weka.core.TechnicalInformation.Field;
 import weka.core.TechnicalInformation.Type;
 
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.Random;
-import java.util.Vector;
+import java.util.*;
 
 import static ml_6002b_coursework.WekaTools.loadClassificationData;
 import static ml_6002b_coursework.WekaTools.splitData;
@@ -237,11 +234,15 @@ public class ID3Coursework extends AbstractClassifier
       Attribute att = (Attribute) attEnum.nextElement();
       infoGains[att.index()] = attSplit.computeAttributeQuality(data, att);
     }
+    //System.out.println(Arrays.toString(infoGains));
+    //System.out.println(Utils.maxIndex(infoGains));
     m_Attribute = data.attribute(Utils.maxIndex(infoGains));
+    System.out.println("index: " + infoGains[m_Attribute.index()]);
 
     // Make leaf if information gain is zero.
     // Otherwise create successors.
     if (Utils.eq(infoGains[m_Attribute.index()], 0)) {
+      System.out.println("create leaf for attribute: " + m_Attribute.name());
       m_Attribute = null;
       m_Distribution = new double[numClasses];
       Enumeration instEnum = data.enumerateInstances();
@@ -253,6 +254,7 @@ public class ID3Coursework extends AbstractClassifier
       m_ClassValue = Utils.maxIndex(m_Distribution);
       m_ClassAttribute = data.classAttribute();
     } else {
+      System.out.println("create split for attribute: " + m_Attribute.name());
       Instances[] splitData;
       if (m_Attribute.isNominal()) {
         splitData = attSplit.splitData(data, m_Attribute);
@@ -266,7 +268,7 @@ public class ID3Coursework extends AbstractClassifier
       for (int j = 0; j < numValues; j++) {
         m_Successors[j] = new ID3Coursework();
         m_Successors[j].attSplit = attSplit;
-        System.out.println(m_Successors[j].attSplit.getClass().getSimpleName());
+        //System.out.println(m_Successors[j].attSplit.getClass().getSimpleName());
         //m_Successors[j].setAtt(true, 'I');
         m_Successors[j].makeTree(splitData[j]);
       }
@@ -547,7 +549,12 @@ public class ID3Coursework extends AbstractClassifier
   private int selectBranch(Instance instance){
     int temp;
     if(m_Attribute.isNumeric()){
-      temp = instance.value(m_Attribute) < m_SplitPoint ? 0 : 1;
+      if (instance.value(m_Attribute) < m_SplitPoint){
+        temp = 0;
+      }
+      else{
+        temp = 1;
+      }
     }
     else{
       temp = (int) instance.value(m_Attribute);
@@ -565,7 +572,8 @@ public class ID3Coursework extends AbstractClassifier
     Instances chinatownTest = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Chinatown_TEST.arff");
 
     Instances optdigits = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/optdigits.arff");
-    Instances[] trainTest = resampleInstances(optdigits, 0, 0.7);
+    //Instances[] trainTest = resampleInstances(optdigits, 0, 0.7);
+    Instances[] trainTest = splitData(optdigits, 0.5);
     Instances optdigitsTrain = trainTest[0];
     Instances optdigitsTest = trainTest[1];
 
@@ -577,26 +585,25 @@ public class ID3Coursework extends AbstractClassifier
       ID3Coursework id3 = new ID3Coursework();
       String[] options = new String[1];
 
-      options[0] = "-I";
+  /*    options[0] = "-I";
       id3.setOptions(options);
-      id3.buildClassifier(chinatownTrain);
+      id3.buildClassifier(optdigitsTrain);
       System.out.println(id3.getAtt());
       System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
-              + WekaTools.accuracy(id3, chinatownTest));
+              + WekaTools.accuracy(id3, optdigitsTest));
 
       options[0] = "-G";
       id3.setOptions(options);
-      id3.buildClassifier(chinatownTrain);
+      id3.buildClassifier(optdigitsTrain);
       System.out.println(id3.getAtt());
       System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
-              + WekaTools.accuracy(id3, chinatownTest));
+              + WekaTools.accuracy(id3, optdigitsTest));*/
 
-      ID3Coursework chiID3 = new ID3Coursework();
       options[0] = "-C";
-      chiID3.setOptions(options);
-      chiID3.buildClassifier(chinatownTrain);
-      System.out.println("Id3 using measure " + chiID3.getAtt() + " on JW Problem has test accuracy = "
-              + WekaTools.accuracy(chiID3, chinatownTest));
+      id3.setOptions(options);
+      id3.buildClassifier(optdigitsTrain);
+      System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
+              + WekaTools.accuracy(id3, optdigitsTest));
 
       /*ID3Coursework yatesID3 = new ID3Coursework(new ChiSquaredAttributeSplitMeasure(true));
       options[0] = "-Y";

@@ -5,11 +5,21 @@ import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
 
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Vector;
 
-import static ml_6002b_coursework.AttributeMeasures.measureChiSquared;
-import static ml_6002b_coursework.AttributeMeasures.measureChiSquaredYates;
 import static ml_6002b_coursework.WekaTools.loadClassificationData;
+
+/**
+ * CMP-6002B Machine Learning Classification with Decision Trees
+ *
+ * Provides an implementation of AttributeSplitMeasure using
+ * Chi Squared Statistic.
+ *
+ * @author Alex Middlemiss, 100219171, exb17gxu
+ * @version 1.0, 21/03/2021
+ */
 
 public class ChiSquaredAttributeSplitMeasure implements AttributeSplitMeasure {
 
@@ -30,45 +40,52 @@ public class ChiSquaredAttributeSplitMeasure implements AttributeSplitMeasure {
      * @return the chi for the given attribute and data
      */
     @Override
-    public double computeAttributeQuality(Instances data, Attribute att) throws Exception {
-        if (data.numInstances() == 0)
-            return 0;
+    public double computeAttributeQuality(Instances data, Attribute att) {
 
-        Instances[] splitData;
-        int numValues;
+        double chi = 0.0;
+        Instances[] splitData = splitData(data, att);
+        double[] dataClassCount = new double[data.numClasses()];
+        double[][] splitClassCounts = new double[splitData.length][data.numClasses()];
 
-        if (att.isNominal()) {
-            splitData = splitData(data, att);
-            numValues = att.numValues();
-            System.out.println(numValues);
-        }
-        else {
-            splitData = splitDataOnNumeric(data, att).getKey();
-            numValues = splitData.length;
+        Enumeration instEnum = data.enumerateInstances();
+        while (instEnum.hasMoreElements()) {
+            Instance inst = (Instance) instEnum.nextElement();
+            dataClassCount[(int)inst.classValue()]++;
         }
 
-        double[][] matrix = new double[numValues][data.numClasses()];
-        for (int i = 0; i < numValues; i++) {
-            for (Instance instance : splitData[i]) {
-                int value = (int) instance.classValue();
-                matrix[i][value]++;
+        for (int i = 0; i < splitData.length; i++) {
+            Enumeration instEnum2 = splitData[i].enumerateInstances();
+            while (instEnum2.hasMoreElements()) {
+                Instance inst = (Instance) instEnum2.nextElement();
+                splitClassCounts[i][(int) inst.classValue()]++;
             }
         }
 
-        if(yates){
-            return measureChiSquaredYates(matrix);
+        //System.out.println(Arrays.deepToString(splitClassCounts));
+
+        for (int i = 0; i < att.numValues(); i++) {
+            if (splitData[i].numInstances() > 0) {
+                for (int j = 0; j < splitClassCounts[i].length; j++) {
+                    double exp = (splitData[i].numInstances() *
+                            (dataClassCount[j] / data.numInstances()));
+                    if (yates) {
+                        chi += Math.pow((splitClassCounts[i][j] - exp - 0.5), 2) / exp;
+                    } else {
+                        chi += Math.pow((splitClassCounts[i][j] - exp), 2) / exp;
+                    }
+                }
+            }
         }
-        else{
-            return measureChiSquared(matrix);
-        }
+
+        return chi;
     }
 
     @Override
     public String toString() {
         if (yates) {
-            return "-Y: Split is Chi Squared statistic with Yates correction.";
+            return "-Y: Attribute is Chi Squared statistic with Yates correction.";
         } else {
-            return "-C: Split is Chi Squared statistic.";
+            return "-C: Attribute is Chi Squared statistic.";
         }
 
     }

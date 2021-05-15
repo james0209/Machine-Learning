@@ -95,7 +95,7 @@ public class TreeEnsemble extends AbstractClassifier implements Tuneable {
             String x  = Arrays.toString(splitMeasures[temp]);
             x = "-"+x;
             System.out.println("x is: " + x);*/
-            options[0] = "-C";
+            options[0] = "-I";
 
             id3.setOptions(options);
             System.out.println(id3.getAtt());
