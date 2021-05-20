@@ -4,21 +4,6 @@ import static java.lang.Double.max;
 
 public class AttributeMeasures {
     private static final double log2 = Math.log(2);
-    private static double sumDoubles(double[] x){
-        double sum = 0;
-        for (int i = 0;i < x.length;i++){
-            sum += x[i];
-        }
-        return sum;
-    }
-
-    private static int sumInts(int[] x){
-        int sum = 0;
-        for (int i = 0;i < x.length;i++){
-            sum += x[i];
-        }
-        return sum;
-    }
 
     // Rows represent different values of the attribute being assessed
     // Columns represent the class counts

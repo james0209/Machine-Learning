@@ -578,6 +578,12 @@ catch (Exception e){
       id3.buildClassifier(optdigitsTrain);
       System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
               + WekaTools.accuracy(id3, optdigitsTest));
+      id3 = new ID3Coursework();
+      id3.setOptions(options);
+      id3.setMaxTreeDepth(-1);
+      id3.buildClassifier(chinatownTrain);
+      System.out.println("Id3 using measure " + id3.getAtt() + " on Chinatown Problem has test accuracy = "
+              + WekaTools.accuracy(id3, chinatownTest));
 
       id3 = new ID3Coursework();
       options[0] = "-G";
@@ -586,6 +592,12 @@ catch (Exception e){
       id3.buildClassifier(optdigitsTrain);
       System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
               + WekaTools.accuracy(id3, optdigitsTest));
+      id3 = new ID3Coursework();
+      id3.setOptions(options);
+      id3.setMaxTreeDepth(-1);
+      id3.buildClassifier(chinatownTrain);
+      System.out.println("Id3 using measure " + id3.getAtt() + " on Chinatown Problem has test accuracy = "
+              + WekaTools.accuracy(id3, chinatownTest));
 
       id3 = new ID3Coursework();
       options[0] = "-C";
@@ -594,6 +606,12 @@ catch (Exception e){
       id3.buildClassifier(optdigitsTrain);
       System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
               + WekaTools.accuracy(id3, optdigitsTest));
+      id3 = new ID3Coursework();
+      id3.setOptions(options);
+      id3.setMaxTreeDepth(-1);
+      id3.buildClassifier(chinatownTrain);
+      System.out.println("Id3 using measure " + id3.getAtt() + " on Chinatown Problem has test accuracy = "
+              + WekaTools.accuracy(id3, chinatownTest));
 
       id3 = new ID3Coursework();
       options[0] = "-Y";
@@ -602,6 +620,12 @@ catch (Exception e){
       id3.buildClassifier(optdigitsTrain);
       System.out.println("Id3 using measure " + id3.getAtt() + " yates on JW Problem has test accuracy = "
               + WekaTools.accuracy(id3, optdigitsTest));
+      id3 = new ID3Coursework();
+      id3.setOptions(options);
+      id3.setMaxTreeDepth(-1);
+      id3.buildClassifier(chinatownTrain);
+      System.out.println("Id3 using measure " + id3.getAtt() + " on Chinatown Problem has test accuracy = "
+              + WekaTools.accuracy(id3, chinatownTest));
 
     }
     catch (Exception e){

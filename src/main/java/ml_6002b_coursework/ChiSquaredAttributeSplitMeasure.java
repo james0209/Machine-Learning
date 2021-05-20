@@ -59,15 +59,6 @@ public class ChiSquaredAttributeSplitMeasure implements AttributeSplitMeasure {
             }
         }
 
-/*        for (int[] x : table)
-        {
-            for (int y : x)
-            {
-                System.out.print(y + " ");
-            }
-            System.out.println();
-        }*/
-
         if(yates){
             return measureChiSquaredYates(table);
         }

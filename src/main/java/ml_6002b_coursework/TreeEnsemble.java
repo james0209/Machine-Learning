@@ -111,6 +111,8 @@ public class TreeEnsemble extends AbstractClassifier implements Tuneable {
             }
 
             id3.setOptions(options);
+            System.out.println(id3.getAtt() + id3.getMaxTreeDepth());
+
             id3.buildClassifier(inst);
             attributesUsed.put(id3, attSubset);
         }
@@ -161,17 +163,14 @@ public class TreeEnsemble extends AbstractClassifier implements Tuneable {
     }
 
     public static void main(String[] args) throws Exception {
-        Instances trainingData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/MixedShapesSmallTrain_TRAIN.arff");
-        Instances testData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/MixedShapesSmallTrain_TEST.arff");
-
         Instances optdigits = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/optdigits.arff");
-        Instances[] trainTest = splitData(trainingData, 0.5);
+        Instances[] trainTest = splitData(optdigits, 0.5);
         Instances optdigitsTrain = trainTest[0];
         Instances optdigitsTest = trainTest[1];
 
         TreeEnsemble treeEnsemble = new TreeEnsemble();
 
-        baseClassifier.setMaxTreeDepth(10);
+        //baseClassifier.setMaxTreeDepth(10);
 
         try
         {
@@ -180,7 +179,7 @@ public class TreeEnsemble extends AbstractClassifier implements Tuneable {
             System.out.println("optdigits test accuracy: " + WekaTools.accuracy(treeEnsemble, optdigitsTest));
             System.out.println("probability estimates for the first five test cases: ");
             for (int i = 0; i < 5; i++)
-                System.out.println("Instance classification " + i + " = " + treeEnsemble.classifyInstance(trainingData.get(i)));
+                System.out.println("Test Case " + i + ": classification = " + treeEnsemble.classifyInstance(optdigits.get(i)));
         } catch (Exception e)
         {
             e.printStackTrace();
