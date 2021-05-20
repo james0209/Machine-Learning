@@ -97,20 +97,19 @@ public interface AttributeSplitMeasure {
     default Map.Entry<Instances[], Double> splitDataOnNumeric(Instances data, Attribute att){{
         //System.out.println("Att num values: " + att.numValues());
         Instances[] splitData = new Instances[2];
-        splitData[0] = new Instances(data, 0); //Above
-        splitData[1] = new Instances(data, 0); //Below
+        splitData[0] = new Instances(data, 0); //Below
+        splitData[1] = new Instances(data, 0); //Above
 
             AttributeStats as = data.attributeStats(att.index());
 
             double max = as.numericStats.max;
             double min = as.numericStats.min;
             double random = ((Math.random() * (max - min)) + min);
-            //System.out.println("Max: " + max + " Min: " + min + " Random: " + random);
 
             for(int i = 0; i < data.numInstances(); i++)
             {
                 Instance instanceToCheck = data.instance(i);
-                if (instanceToCheck.value(att) > random) {
+                if (instanceToCheck.value(att) < random) {
                     splitData[0].add(instanceToCheck);
                 }
                 else {
@@ -120,10 +119,6 @@ public interface AttributeSplitMeasure {
             for (Instances splitDatum : splitData) {
                 splitDatum.compactify();
             }
-
-            Map<Instances[], Double>
-                    result = Collections
-                    .singletonMap(splitData, random);
 
             Map.Entry<Instances[], Double> entry = new AbstractMap.SimpleEntry<>(splitData, random);
 

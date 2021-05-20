@@ -1,9 +1,9 @@
 /*
  * This file is part of the UEA Time Series Machine Learning (TSML) toolbox.
  *
- * The UEA TSML toolbox is free software: you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as published 
- * by the Free Software Foundation, either version 3 of the License, or 
+ * The UEA TSML toolbox is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * The UEA TSML toolbox is distributed in the hope that it will be useful,
@@ -17,6 +17,7 @@
 package experiments;
 
 import com.google.common.testing.GcFinalization;
+import evaluation.tuning.Tuner;
 import machine_learning.classifiers.SaveEachParameter;
 import machine_learning.classifiers.tuned.TunedClassifier;
 import machine_learning.classifiers.tuned.TunedRandomForest;
@@ -37,7 +38,6 @@ import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ml_6002b_coursework.TreeEnsemble;
 import tsml.classifiers.*;
 import evaluation.evaluators.CrossValidationEvaluator;
 import evaluation.evaluators.SingleSampleEvaluator;
@@ -57,7 +57,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-
+import ml_6002b_coursework.TreeEnsemble;
 import machine_learning.classifiers.ensembles.SaveableEnsemble;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -171,7 +171,7 @@ public class Experiments  {
             settings[7]="-d=true"; //Debugging
             settings[8]="--force=true"; //Overwrites existing results if true, otherwise set to false
 
-            String[] probFiles= {"optdigits"}; //Problem name(s)
+            String[] probFiles= {"Chinatown"}; //Problem name(s)
 //            String[] probFiles= DatasetLists.fixedLengthMultivariate;
             /*
              * END OF SETTINGS
@@ -182,18 +182,17 @@ public class Experiments  {
                 System.out.println("\t"+str);
             System.out.println("");
 
-
             TunedClassifier classifier_ = new TunedClassifier();
             classifier_.setClassifier(new TreeEnsemble());
+//            classifier_.setTuner(new Tuner(new CrossValidationEvaluator()));
 
             boolean threaded=true;
             if (threaded) {
-                //ExperimentalArguments expSettings = new ExperimentalArguments(settings);
                 ExperimentalArguments expSettings = new ExperimentalArguments();
                 expSettings.classifierName = "TreeEnsemble";
                 expSettings.dataReadLocation = "src/main/java/ml_6002b_coursework/test_data/";
                 expSettings.resultsWriteLocation = "src/main/java/ml_6002b_coursework/test_result/";
-                //expSettings.datasetName = "optdigits";
+//                expSettings.datasetName = "Chinatown";
                 expSettings.forceEvaluation = false;
                 expSettings.classifier = classifier_;
 //                expSettings.run();
@@ -565,8 +564,10 @@ public class Experiments  {
 
         //todo just enforce nanos everywhere, this is ridiculous. this needs overhaul
 
+        long estimateToUpdateWith = 0; // no estimate by default
+        long timingToUpdateWith = buildTime; //the timing that experiments measured by default
+
         if (exp.generateErrorEstimateOnTrainSet) { //want timings and full predictions
-            long timingToUpdateWith = buildTime; //the timing that experiments measured by default
             TimeUnit timeUnitToUpdateWith = expTimeUnit;
             String paras = "No parameter info";
 
@@ -587,7 +588,7 @@ public class Experiments  {
             }
 
             timingToUpdateWith = trainResults.getTimeUnit().convert(timingToUpdateWith, timeUnitToUpdateWith);
-            long estimateToUpdateWith = trainResults.getTimeUnit().convert(trainResults.getErrorEstimateTime(), timeUnitToUpdateWith);
+            estimateToUpdateWith = trainResults.getTimeUnit().convert(trainResults.getErrorEstimateTime(), timeUnitToUpdateWith);
 
             //update the externally produced results with the appropriate timing
             trainResults.setBuildTime(timingToUpdateWith);
@@ -659,7 +660,7 @@ public class Experiments  {
                     ((Checkpointable) classifier).setCheckpointTimeHours((int) TimeUnit.HOURS.convert(expSettings.checkpointInterval, TimeUnit.NANOSECONDS));
                 }
                 //else, as default
-                    // want to checkpoint at classifier's discretion
+                // want to checkpoint at classifier's discretion
             }
         }
 
@@ -1223,7 +1224,7 @@ public class Experiments  {
                                     field.getName().equals("foldId") ||
                                     field.getName().equals("classifier") ||
                                     field.getName().equals("classifierGenerator")
-                                )
+                            )
                                 continue;
 
                             try {
@@ -1281,7 +1282,7 @@ public class Experiments  {
                     checkpointInterval = parseTiming(checkpointingStr);
 
                 }
-          }
+            }
 
             //populating the contract times if present
             if (contractTrainTimeString != null)

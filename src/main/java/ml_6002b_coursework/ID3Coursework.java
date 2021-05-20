@@ -30,6 +30,7 @@ import weka.core.Capabilities.Capability;
 import weka.core.TechnicalInformation.Field;
 import weka.core.TechnicalInformation.Type;
 
+import java.io.Serializable;
 import java.util.*;
 
 import static ml_6002b_coursework.WekaTools.loadClassificationData;
@@ -101,10 +102,16 @@ public class ID3Coursework extends AbstractClassifier
 
   /** Class attribute of dataset. */
   private Attribute m_ClassAttribute;
-  private AttributeSplitMeasure attSplit = new ChiSquaredAttributeSplitMeasure();
+  private AttributeSplitMeasure attSplit = new IGAttributeSplitMeasure();
 
   /** Split point used for splitting with a numeric attribute */
   private double m_SplitPoint;
+
+  /** Maximum tree depth for the classifier */
+/*  If this value is -1, then the tree is grown to full
+    depth.
+    */
+  private int maxTreeDepth = -1;
 
   public ID3Coursework(){
 
@@ -114,8 +121,12 @@ public class ID3Coursework extends AbstractClassifier
     this.attSplit = attSplit;
   }
 
-  public String[][] getMeasures(){
-    return new String[][]{{"I"}, {"G"}, {"C"}, {"Y"}};
+  public int getMaxTreeDepth() {
+    return maxTreeDepth;
+  }
+
+  public void setMaxTreeDepth(int maxTreeDepth) {
+    this.maxTreeDepth = maxTreeDepth;
   }
 
   @Override
@@ -196,7 +207,7 @@ public class ID3Coursework extends AbstractClassifier
     data = new Instances(data);
     data.deleteWithMissingClass();
 
-    makeTree(data);
+    makeTree(data, 0);
   }
 
   /**
@@ -205,39 +216,43 @@ public class ID3Coursework extends AbstractClassifier
    * @param data the training data
    * @exception Exception if decision tree can't be built successfully
    */
-  private void makeTree(Instances data) throws Exception {
+  private void makeTree(Instances data, int depth) throws Exception {
     int numInstances = data.numInstances();
     int numClasses = data.numClasses();
 
     // Check if no instances have reached this node.
     if (data.numInstances() == 0) {
-      Random random= new Random();
       m_Attribute = null;
       m_ClassValue = Utils.missingValue();
       m_Distribution = new double[numClasses];
       return;
     }
-    else if (data.numInstances() == 1 || data.classAttribute().numValues() == 1) {
+/*    else if (data.numInstances() == 1 || data.classAttribute().numValues() == 1) {
       m_Attribute = null;
       m_ClassValue = data.get(0).classValue();
       m_Distribution = new double[numClasses];
       m_Distribution[(int) m_ClassValue] = numInstances;
       m_ClassAttribute = data.classAttribute();
       return;
-    }
+    }*/
 
     // Compute attribute with maximum information gain.
     double[] infoGains = new double[data.numAttributes()];
     Enumeration attEnum = data.enumerateAttributes();
     while (attEnum.hasMoreElements()) {
       Attribute att = (Attribute) attEnum.nextElement();
-      infoGains[att.index()] = attSplit.computeAttributeQuality(data, att);
+      double quality = attSplit.computeAttributeQuality(data, att);
+      //System.out.println(att.name());
+      //System.out.println(quality);
+      infoGains[att.index()] = quality;
     }
     m_Attribute = data.attribute(Utils.maxIndex(infoGains));
 
     // Make leaf if information gain is zero.
     // Otherwise create successors.
-    if (Utils.eq(infoGains[m_Attribute.index()], 0)) {
+    if (Utils.eq(infoGains[m_Attribute.index()], 0)
+            || (maxTreeDepth >= 0 && depth > maxTreeDepth)) {
+      //System.out.println("Is leaf");
       m_Attribute = null;
       m_Distribution = new double[numClasses];
       Enumeration instEnum = data.enumerateInstances();
@@ -249,6 +264,7 @@ public class ID3Coursework extends AbstractClassifier
       m_ClassValue = Utils.maxIndex(m_Distribution);
       m_ClassAttribute = data.classAttribute();
     } else {
+      //System.out.println("Is split");
       Instances[] splitData;
       if (m_Attribute.isNominal()) {
         splitData = attSplit.splitData(data, m_Attribute);
@@ -261,8 +277,11 @@ public class ID3Coursework extends AbstractClassifier
       m_Successors = new ID3Coursework[numValues];
       for (int j = 0; j < numValues; j++) {
         m_Successors[j] = new ID3Coursework();
+        m_Successors[j].setMaxTreeDepth(this.maxTreeDepth);
         m_Successors[j].attSplit = attSplit;
-        m_Successors[j].makeTree(splitData[j]);
+        //System.out.println(m_Successors[j].getAtt());
+        //System.out.println(depth);
+        m_Successors[j].makeTree(splitData[j], depth+1);
       }
     }
   }
@@ -458,35 +477,6 @@ public class ID3Coursework extends AbstractClassifier
   }
 
   /**
-   * Returns an enumeration describing the available options.
-   *
-   * @return an enumeration of all the available options.
-   */
-  public Enumeration listOptions() {
-
-    Vector newVector = new Vector(4);
-
-    newVector.addElement(new Option(
-            "\tIf set, classifier is run using Information Gain\n"
-                    + "\tas the attribute selection measure.",
-            "I", 0, "-I"));
-    newVector.addElement(new Option(
-            "\tIf set, classifier is run using Gini Index\n"
-                    + "\tas the attribute selection measure.",
-            "G", 0, "-G"));
-    newVector.addElement(new Option(
-            "\tIf set, classifier is run using Chi Squared\n"
-                    + "\tas the attribute selection measure.",
-            "C", 0, "-C"));
-    newVector.addElement(new Option(
-            "\tIf set, classifier is run using Chi Squared\n"
-                    + "\t with Yates as the attribute selection measure.",
-            "Y", 0, "-Y"));
-
-    return newVector.elements();
-  }
-
-  /**
    * Parses a given list of options.
    *
    * @param options the list of options as an array of strings
@@ -569,39 +559,46 @@ catch (Exception e){
     Instances chinatownTest = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Chinatown_TEST.arff");
 
     Instances optdigits = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/optdigits.arff");
-    //Instances[] trainTest = resampleInstances(optdigits, 0, 0.7);
-    Instances[] trainTest = splitData(optdigits, 0.5);
+    Instances[] trainTest = resampleInstances(optdigits, 0, 0.7);
+    //Instances[] trainTest = splitData(optdigits, 0.5);
     Instances optdigitsTrain = trainTest[0];
     Instances optdigitsTest = trainTest[1];
 
     Instances diagnosis = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Diagnosis_TRAIN.arff");
 
     try{
-      Instances[] splits = splitData(optdigits, 0.5);
+      //Instances[] splits = splitData(optdigits, 0.5);
 
       ID3Coursework id3 = new ID3Coursework();
       String[] options = new String[1];
 
       options[0] = "-I";
       id3.setOptions(options);
+      id3.setMaxTreeDepth(-1);
       id3.buildClassifier(optdigitsTrain);
       System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
               + WekaTools.accuracy(id3, optdigitsTest));
 
+      id3 = new ID3Coursework();
       options[0] = "-G";
       id3.setOptions(options);
+      id3.setMaxTreeDepth(-1);
       id3.buildClassifier(optdigitsTrain);
       System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
               + WekaTools.accuracy(id3, optdigitsTest));
 
+      id3 = new ID3Coursework();
       options[0] = "-C";
       id3.setOptions(options);
+      id3.setMaxTreeDepth(-1);
       id3.buildClassifier(optdigitsTrain);
       System.out.println("Id3 using measure " + id3.getAtt() + " on JW Problem has test accuracy = "
               + WekaTools.accuracy(id3, optdigitsTest));
 
+      id3 = new ID3Coursework();
       options[0] = "-Y";
       id3.setOptions(options);
+      id3.setMaxTreeDepth(-1);
       id3.buildClassifier(optdigitsTrain);
       System.out.println("Id3 using measure " + id3.getAtt() + " yates on JW Problem has test accuracy = "
               + WekaTools.accuracy(id3, optdigitsTest));

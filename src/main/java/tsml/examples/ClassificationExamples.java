@@ -320,7 +320,7 @@ public class ClassificationExamples {
 //Example usage: 
         
 //2. Set up the arguments: Classifier, Problem, Fold, Problem Location, Results location
-        String[] paras={"BOSS","ItalyPowerDemand","1","Z:/ArchiveData/Univariate_arff/","C:/Temp/"};
+        String[] paras={"BOSS","","1","C:\\Users\\jpebr\\Desktop\\tsml-master\\tsml\\src\\main\\java\\ml_6002b_coursework\\test_data\\Chinatown","C:/Temp/"};
 //3. Run a full experiment, saving the results
         singleClassifierAndFold(paras);
     }

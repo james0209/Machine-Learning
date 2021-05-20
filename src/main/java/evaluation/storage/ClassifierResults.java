@@ -1708,10 +1708,10 @@ public class ClassifierResults implements DebugPrinting, Serializable {
                     //acts as a basic form of verification, does the acc reported on line 3 align with
                     //the acc calculated while reading predictions
                     double eps = 1.e-8;
-                    if (Math.abs(reportedTestAcc - acc) > eps) {
+                    /*if (Math.abs(reportedTestAcc - acc) > eps) {
                         throw new ArithmeticException("Calculated accuracy (" + acc + ") differs from written accuracy (" + reportedTestAcc + ") "
                                 + "by more than eps (" + eps + "). File = " + path + ". numinstances = " + numInstances + ". numClasses = " + numClasses);
-                    }
+                    }*/
 
                     if (predDistributions == null || predDistributions.isEmpty() || predDistributions.get(0) == null) {
                         if (printDistMissingWarning)

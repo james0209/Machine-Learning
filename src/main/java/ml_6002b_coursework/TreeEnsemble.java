@@ -19,7 +19,7 @@ public class TreeEnsemble extends AbstractClassifier implements Tuneable {
     private int ensembleSize = 50;
     private double proportion = 0.5;
     private boolean averaging = false;
-    private ID3Coursework baseClassifier = new ID3Coursework();
+    private static ID3Coursework baseClassifier = new ID3Coursework();
     private final LinkedHashMap<ID3Coursework, RandomSubset> attributesUsed = new LinkedHashMap<>();
 
     public int getSeed() {
@@ -47,7 +47,7 @@ public class TreeEnsemble extends AbstractClassifier implements Tuneable {
     }
 
     public void setBaseClassifier(ID3Coursework baseClassifier) {
-        this.baseClassifier = baseClassifier;
+        TreeEnsemble.baseClassifier = baseClassifier;
     }
 
     public boolean isAveraging() {
@@ -121,7 +121,6 @@ public class TreeEnsemble extends AbstractClassifier implements Tuneable {
         double[] distribution = distributionForInstance(instance);
         //int[] temp = argMax(distribution);
         return argMax(distribution, new Random());
-
     }
 
     @Override
@@ -162,11 +161,17 @@ public class TreeEnsemble extends AbstractClassifier implements Tuneable {
     }
 
     public static void main(String[] args) throws Exception {
-        Instances trainingData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/optdigits.arff");
-        Instances[] trainTest = splitData(trainingData, 0.7);
+        Instances trainingData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/MixedShapesSmallTrain_TRAIN.arff");
+        Instances testData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/MixedShapesSmallTrain_TEST.arff");
+
+        Instances optdigits = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/optdigits.arff");
+        Instances[] trainTest = splitData(trainingData, 0.5);
         Instances optdigitsTrain = trainTest[0];
         Instances optdigitsTest = trainTest[1];
+
         TreeEnsemble treeEnsemble = new TreeEnsemble();
+
+        baseClassifier.setMaxTreeDepth(10);
 
         try
         {
@@ -175,7 +180,7 @@ public class TreeEnsemble extends AbstractClassifier implements Tuneable {
             System.out.println("optdigits test accuracy: " + WekaTools.accuracy(treeEnsemble, optdigitsTest));
             System.out.println("probability estimates for the first five test cases: ");
             for (int i = 0; i < 5; i++)
-                System.out.println("classify instance = " + treeEnsemble.classifyInstance(trainingData.get(i)));
+                System.out.println("Instance classification " + i + " = " + treeEnsemble.classifyInstance(trainingData.get(i)));
         } catch (Exception e)
         {
             e.printStackTrace();
@@ -185,10 +190,10 @@ public class TreeEnsemble extends AbstractClassifier implements Tuneable {
     @Override
     public ParameterSpace getDefaultParameterSearchSpace() {
         ParameterSpace ps = new ParameterSpace();
-/*        String[] ensembleSize={"50","100","300","500"};
+        String[] ensembleSize={"50","100","300","500"};
         ps.addParameter("t", ensembleSize);
         String[] proportion={"0.5","0.75","1"};
-        ps.addParameter("p", proportion);*/
+        ps.addParameter("p", proportion);
         String[] averaging={"true","false"};
         ps.addParameter("a", averaging);
         ps.parameterLists.putAll(baseClassifier.getDefaultParameterSearchSpace().parameterLists);

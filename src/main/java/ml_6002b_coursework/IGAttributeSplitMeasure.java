@@ -24,16 +24,18 @@ public class IGAttributeSplitMeasure implements AttributeSplitMeasure{
         double infoGain = computeEntropy(data);
 
         Instances[] splitData;
+        int numValues;
 
         if (att.isNominal()) {
             splitData = splitData(data, att);
+            numValues = att.numValues();
         }
         else {
             splitData = splitDataOnNumeric(data, att).getKey();
+            numValues = splitData.length;
         }
 
-        if (att.isNominal()){
-            for (int j = 0; j < att.numValues(); j++) {
+            for (int j = 0; j < numValues; j++) {
                 if (splitData[j].numInstances() > 0) {
                     infoGain -= ((double) splitData[j].numInstances() /
                             (double) data.numInstances()) *
@@ -41,18 +43,6 @@ public class IGAttributeSplitMeasure implements AttributeSplitMeasure{
                 }
             }
             return infoGain;
-        }
-        else{
-            for(int i = 0; i < splitData.length; i++){
-                if (splitData[i].numInstances() > 0) {
-                    infoGain -= ((double) splitData[i].numInstances() /
-                            (double) data.numInstances()) *
-                            computeEntropy(splitData[i]);
-                }
-            }
-            return infoGain;
-        }
-
     }
 
     /**

@@ -4,16 +4,34 @@ import static java.lang.Double.max;
 
 public class AttributeMeasures {
     private static final double log2 = Math.log(2);
+    private static double sumDoubles(double[] x){
+        double sum = 0;
+        for (int i = 0;i < x.length;i++){
+            sum += x[i];
+        }
+        return sum;
+    }
+
+    private static int sumInts(int[] x){
+        int sum = 0;
+        for (int i = 0;i < x.length;i++){
+            sum += x[i];
+        }
+        return sum;
+    }
 
     // Rows represent different values of the attribute being assessed
     // Columns represent the class counts
 
-    public static double measureInformationGain(double[][] array){
+    public static double measureInformationGain(int[][] array){
+        if (array.length == 0 || array[0].length == 0)
+            return 0;
+
         double returnValue = 0, rowSum, total = 0;
         int numRows = array.length;
         int numCols = array[0].length;
 
-        for (double[] doubles : array) {
+        for (int[] doubles : array) {
             rowSum = 0;
             for (int j = 0; j < numCols; j++) {
                 returnValue = returnValue + (doubles[j] * Math.log(doubles[j]));
@@ -32,21 +50,24 @@ public class AttributeMeasures {
 
     }
 
-    public static double measureGini(double[][] array){
+    public static double measureGini(int[][] array){
+        if (array.length == 0 || array[0].length == 0)
+            return 0;
+
         try{
             double returnValue = 0, rowSum = 0, total = 0, weighted = 0;
             int numRows = array.length;
             int numCols = array[0].length;
             double[] values = new double[numCols];
 
-            for (double[] doubles : array) {
+            for (int[] doubles : array) {
                 for (int j = 0; j < numCols; j++) {
                     total += doubles[j];
                 }
             }
 
 
-            for (double[] doubles : array) {
+            for (int[] doubles : array) {
                 returnValue = 0;
                 rowSum = 0;
                 for (int j = 0; j < numCols; j++) {
@@ -55,17 +76,12 @@ public class AttributeMeasures {
                 }
 
                 for (double x : values){
-                    //System.out.println(x + " / " + rowSum);
                     returnValue += Math.pow((x/rowSum),2);
-                    //System.out.println("Return value " + returnValue);
                 }
 
 
                 returnValue = (1 - returnValue);
-                //System.out.println("Calculated impurity for node  " + returnValue);
-                //System.out.println("Calculation  " + returnValue + " * " + "( " + rowSum + " / " + total);
                 weighted+= (returnValue*(rowSum/total));
-                //System.out.println("Current weighted = " + weighted);
             }
 
             if (total == 0) {
@@ -81,34 +97,32 @@ public class AttributeMeasures {
         }
     }
 
-    private static double chiSquared(double[][] split, boolean yates){
-        double chi = 0, n = 0;
+    private static double chiSquared(int[][] split, boolean yates){
+        double chi = 0, count = 0;
 
         int attributeValues = split.length;
         int classes = split[0].length;
-        if (attributeValues <= 1 && classes <= 1 || split[0].length == 0)
-            return 0;
 
-        double[] valueTotals = new double [attributeValues];
+        double[] attTotals = new double [attributeValues];
         double[] classTotals = new double [classes];
 
         for (int row = 0; row < attributeValues; row++) {
             for (int col = 0; col < classes; col++) {
                 double classCount = split[row][col];
-                valueTotals[row] += classCount;
+                attTotals[row] += classCount;
                 classTotals[col] += classCount;
-                n += classCount;
+                count += classCount;
             }
         }
 
         for (int row = 0; row < attributeValues; row++) {
-            if (valueTotals[row] > 0) {
+            if (attTotals[row] > 0) {
                 for (int col = 0; col < classes; col++) {
                     if (classTotals[col] > 0) {
-                        double expected = valueTotals[row] * (classTotals[col] / n);
+                        double expected = attTotals[row] * (classTotals[col] / count);
                         double diff = Math.abs(split[row][col] - expected);
-                        if(yates){
-                            diff -= -0.5;
+                        if(yates) {
+                            diff = max(diff - 0.5, 0);
                         }
                         chi += diff * diff / expected;
                     }
@@ -117,116 +131,16 @@ public class AttributeMeasures {
         }
         return chi;
     }
-    public static double measureChiSquared(double[][] split) {
-        // measureChiSquared returns the chi-squared statistic for the contingency table
-        return chiSquared(split, false);
+    public static double measureChiSquared(int[][] array) {
+        return chiSquared(array, false);
     }
 
-    public static double measureChiSquaredYates(double[][] split) {
-        // measureChiSquaredYates returns the chi-squared statistic after applying the Yates correction.
-        // We did not cover this feature in the lecture, so it is up to you to find out how to do it.
-        // Apply Yates' correction if wanted
-        return chiSquared(split, true);
+    public static double measureChiSquaredYates(int[][] array) {
+        return chiSquared(array, true);
     }
-
-    /*public static double measureChiSquared(double[][] array){
-        double chiSquareValue = 0.0;
-        try{
-            int row, col;
-            double total = 0;
-            double[] rowSum, colSum;
-
-            int numRows = array.length;
-            int numCols = array[0].length;
-
-            rowSum = new double [numRows];
-            colSum  = new double [numCols];
-
-            for (row = 0; row < numRows; row++) {
-                for (col = 0; col < numCols; col++) {
-                    rowSum[row] += array[row][col];
-                    colSum [col] += array[row][col];
-                    total += array[row][col];
-                }
-            }
-
-            // Ensure that data is at least a 2x2 table matrix
-            // DF = degrees of freedom
-            int df = (numRows - 1)*(numCols - 1);
-            if (df <= 0) {
-                return 0.0;
-            }
-            if ( numRows != numCols ){
-                return 0.0;
-            }
-
-            double expected;
-
-            for (row = 0; row < numRows; row++) {
-                for (col = 0; col < numCols; col++) {
-                    expected = (colSum[col] * rowSum[row]) / total;
-                    double difference = Math.abs(array[row][col] - expected);
-                    chiSquareValue += (difference * difference / expected);
-                }
-            }
-            return chiSquareValue;
-        }
-        catch (Exception e){
-            e.printStackTrace();
-        }
-        return chiSquareValue;
-    }
-
-    public static double measureChiSquaredYates(double[][] array){
-        double chiSquareYatesValue = 0.0;
-        try{
-            int row, col;
-            double total = 0;
-            double[] rowSum, colSum;
-
-            int numRows = array.length;
-            int numCols = array[0].length;
-
-            rowSum = new double [numRows];
-            colSum  = new double [numCols];
-
-            for (row = 0; row < numRows; row++) {
-                for (col = 0; col < numCols; col++) {
-                    rowSum[row] += array[row][col];
-                    colSum [col] += array[row][col];
-                    total += array[row][col];
-                }
-            }
-
-            // Ensure that data is at least a 2x2 table matrix
-            // DF = degrees of freedom
-            int df = (numRows - 1)*(numCols - 1);
-            if (df <= 0) {
-                return 0.0;
-            }
-
-            double expected;
-
-            for (row = 0; row < numRows; row++) {
-                for (col = 0; col < numCols; col++) {
-                    expected = (colSum[col] * rowSum[row]) / total;
-                    double difference = Math.abs(array[row][col] - expected);
-                    difference -= 0.5;
-                    chiSquareYatesValue += (difference * difference / expected);
-                }
-            }
-            return chiSquareYatesValue;
-        }
-        catch (Exception e){
-            e.printStackTrace();
-        }
-        return chiSquareYatesValue;
-    }*/
-
-
 
     public static void main(String[] args) throws Exception {
-        double[][] array = {{3, 2}, {3, 4}};
+        int[][] array = {{3, 2}, {3, 4}};
         System.out.println("measure information gain for headache splitting diagnosis = " + measureInformationGain(array));
         System.out.println("measure gini for headache splitting diagnosis = " + measureGini(array));
         System.out.println("measure chi-squared for headache splitting diagnosis = " + measureChiSquared(array));

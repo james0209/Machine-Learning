@@ -1,5 +1,6 @@
 package ml_6002b_coursework;
 
+import fileIO.OutFile;
 import weka.classifiers.Classifier;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -160,6 +161,45 @@ public class WekaTools {
             allActualClassValues[i] = classValue;
         }
         return allActualClassValues;
+    }
+
+
+    /**
+     * Function to generate the test results of a classifier given a train and
+     * test dataset.
+     *
+     * @param classifier to build and test on
+     * @param train data
+     * @param test data
+     * @param outputPath full path to output directory
+     * @param outputFile file name of output file (not including extension)
+     */
+    public static void generateTestResults(Classifier classifier, Instances train, Instances test, String outputPath, String outputFile) throws Exception {
+        classifier.buildClassifier(train);
+
+        // setup output file
+        OutFile out = new OutFile(outputPath + outputFile + ".csv");
+        out.writeLine(train.relationName() + "," + classifier.getClass().getSimpleName());
+        out.writeLine("No Parameter Info");
+        out.writeLine(String.valueOf(WekaTools.accuracy(classifier, test)));
+
+        // for each instance in test
+        for (Instance ins : test) {
+            // get predicted class and probabilities of each class
+            int prediction = (int) classifier.classifyInstance(ins);
+            double[] probabilities = classifier.distributionForInstance(ins);
+
+            // write actual class and predicted class
+            out.writeString((int) ins.classValue() + "," + prediction + ",,");
+
+            // write probabilities of each class
+            StringBuilder line = new StringBuilder();
+            for (double d : probabilities) {
+                line.append(d).append(",");
+            }
+            line.deleteCharAt(line.length() - 1); // remove tailing ','
+            out.writeLine(line.toString());
+        }
     }
 
     public static void main(String[] args) throws Exception {

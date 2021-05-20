@@ -53,17 +53,17 @@ public class GiniAttributeSplitMeasure implements AttributeSplitMeasure {
      */
     private double computeImpurity(Instances data) {
 
-        double [] classCounts = new double[data.numClasses()];
+        double [] counts = new double[data.numClasses()];
         double impurity = 1.0;
         double numInstances = data.numInstances();
 
         Enumeration instEnum = data.enumerateInstances();
         while (instEnum.hasMoreElements()) {
             Instance inst = (Instance) instEnum.nextElement();
-            classCounts[(int)inst.classValue()]++;
+            counts[(int)inst.classValue()]++;
         }
 
-        for (double classCount : classCounts) {
+        for (double classCount : counts) {
             if (classCount > 0) {
                 double p = classCount / numInstances;
                 impurity -= p * p;
@@ -71,11 +71,6 @@ public class GiniAttributeSplitMeasure implements AttributeSplitMeasure {
         }
 
         return impurity;
-    }
-
-    @Override
-    public String toString() {
-        return "-G: Attribute is Gini Index.";
     }
 
     public static void main (String[] args) throws Exception {
@@ -86,13 +81,5 @@ public class GiniAttributeSplitMeasure implements AttributeSplitMeasure {
             Attribute att = (Attribute) enumeration.nextElement();
             System.out.println("measure Gini for attribute " + att.name() + " splitting diagnosis = " + giniAttributeSplitMeasure.computeAttributeQuality(currentData, att));
         }
-
-/*        Instances continuousData = loadClassificationData("src/main/java/ml_6002b_coursework/test_data/Chinatown_TRAIN.arff");
-        Enumeration continuousEnumeration = continuousData.enumerateAttributes();
-        GiniAttributeSplitMeasure giniAttributeSplitMeasure2 = new GiniAttributeSplitMeasure();
-        while(continuousEnumeration.hasMoreElements()){
-            Attribute att = (Attribute) continuousEnumeration.nextElement();
-            System.out.println("measure Gini for attribute " + att.name() + " splitting diagnosis = " + giniAttributeSplitMeasure2.computeAttributeQuality(continuousData, att));
-        }*/
     }
 }
